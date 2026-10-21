@@ -1,0 +1,622 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>ホロスコープ練習帳</title>
+
+
+<style>
+/* Layout: person tabs → (wheel | compact data box) → house ledger 1→12, one continuous sign ribbon down the rows */
+:root{
+  --bg:#f5f3f8; --panel:#ffffff; --fg:#27233a; --muted:#6b6583; --faint:#9c97ae; --line:#e0dbe9;
+  --accent:#5a4a98; --accent-soft:#ece8f7;
+  --fire:#c0506a; --earth:#b07a30; --air:#4a8a50; --water:#3a8a9a; --fire-bg:#f8dde3; --earth-bg:#fae6cf; --air-bg:#dcefd9; --water-bg:#d6eef2;
+  --f-display:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  --f-sym:"Noto Sans Symbols","Noto Sans Symbols 2","Segoe UI Symbol","Apple Symbols",sans-serif;
+  --tint:17%; --signline:#9a7350; --magenta:#c8238f; --rowline:#bdb5cc; --ruler:#e3dcf6; --ruler-line:#a594dc;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#16141d; --panel:#201d2a; --fg:#ebe7f3; --muted:#a9a3bd; --faint:#7a748e; --line:#332f40;
+  --accent:#b6a6f2; --accent-soft:#2b2640;
+  --fire:#e88aa0; --earth:#dba862; --air:#86c48c; --water:#72c0cf; --fire-bg:#43262e; --earth-bg:#3f3121; --air-bg:#24362a; --water-bg:#1f3539; --tint:20%; --signline:#a88466; --magenta:#f06bc4; --rowline:#4d4760; --ruler:#3a3358; --ruler-line:#9a8bd6; color-scheme:dark}
+  .pcol{color:color-mix(in srgb,var(--pc) 72%,#fff)} svg .pcol{fill:color-mix(in srgb,var(--pc) 72%,#fff)} svg .pstk{stroke:color-mix(in srgb,var(--pc) 72%,#fff)}}
+:root[data-theme="dark"] .pcol{color:color-mix(in srgb,var(--pc) 72%,#fff)} :root[data-theme="dark"] svg .pcol{fill:color-mix(in srgb,var(--pc) 72%,#fff)} :root[data-theme="dark"] svg .pstk{stroke:color-mix(in srgb,var(--pc) 72%,#fff)}
+:root[data-theme="dark"]{
+  --bg:#16141d; --panel:#201d2a; --fg:#ebe7f3; --muted:#a9a3bd; --faint:#7a748e; --line:#332f40;
+  --accent:#b6a6f2; --accent-soft:#2b2640;
+  --fire:#e88aa0; --earth:#dba862; --air:#86c48c; --water:#72c0cf; --fire-bg:#43262e; --earth-bg:#3f3121; --air-bg:#24362a; --water-bg:#1f3539; --tint:20%; --signline:#a88466; --magenta:#f06bc4; --rowline:#4d4760; --ruler:#3a3358; --ruler-line:#9a8bd6; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.6}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:20px 48px;display:flex;flex-direction:column;gap:18px}
+.sym{font-family:var(--f-sym);font-variant-emoji:text;line-height:1}
+.num{font-variant-numeric:tabular-nums}
+.el-fire{--el:var(--fire);--elbg:var(--fire-bg)} .el-earth{--el:var(--earth);--elbg:var(--earth-bg)} .el-air{--el:var(--air);--elbg:var(--air-bg)} .el-water{--el:var(--water);--elbg:var(--water-bg)}
+
+header.top{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+header.top h1{font-family:var(--f-display);font-weight:700;font-size:22px;margin:0;letter-spacing:.04em;text-wrap:balance}
+header.top .meta{color:var(--muted);font-size:13px}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:thin}
+.tabs button{flex:none;font:inherit;font-weight:500;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:999px;padding:6px 14px;cursor:pointer}
+.tabs button:hover{border-color:var(--accent)}
+.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.tabs button:focus-visible,.toggle input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.note{font-size:12.5px;color:var(--muted);background:var(--accent-soft);border-radius:8px;padding:6px 10px}
+
+.overview{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:18px;align-items:start}
+.wheel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px;display:flex;justify-content:center}
+.wheel svg{width:100%;max-width:470px;height:auto;display:block}
+.databox{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;font-size:12.5px}
+.databox h2{font-size:11px;letter-spacing:.12em;color:var(--faint);font-weight:700;margin:0}
+.cusps{display:grid;grid-template-columns:1fr 1fr;column-gap:16px}
+.cusps div{display:grid;grid-template-columns:22px 32px 1fr;align-items:center;padding:2px 0;border-bottom:1px dotted var(--line)}
+.cusps .h{color:var(--muted)} .cusps .ax{font-size:10.5px;font-weight:700;color:var(--accent)}
+table.pl{border-collapse:collapse;width:100%}
+table.pl td{padding:2.5px 4px;border-bottom:1px dotted var(--line);white-space:nowrap}
+table.pl td:first-child{width:18px;text-align:center;font-size:14px}
+table.pl td.hs{text-align:right;color:var(--muted)}
+table.pl tr.star td{color:var(--muted)}
+.pcol{color:var(--pc);font-weight:600}
+svg .pcol{fill:var(--pc)} svg .pstk{stroke:var(--pc)}
+.r{font-size:10px;color:var(--fire);font-weight:700;margin-left:2px}
+.sg{color:var(--el)}
+.toggle{display:flex;align-items:center;gap:6px;color:var(--muted);cursor:pointer;user-select:none;width:max-content}
+
+/* house ledger */
+.ledger{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.lhead,.hrow{display:grid;grid-template-columns:112px 132px minmax(0,1fr)}
+.lhead{font-size:11px;letter-spacing:.1em;color:var(--faint);font-weight:700;border-bottom:1px solid var(--line)}
+.lhead div{padding:8px 12px}
+.lhead div:nth-child(2){padding-inline:0;text-align:center}
+.hrow{border-bottom:1.5px solid var(--rowline);min-height:92px}
+.hrow:last-child{border-bottom:0}
+.hn{padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.hn b{font-family:var(--f-display);font-size:26px;line-height:1;font-weight:700}
+.hn b small{font-size:12px;margin-left:2px}
+.hn .ax{font-size:10.5px;font-weight:700;color:var(--accent);letter-spacing:.06em}
+.hn .th{font-size:12px;color:var(--muted);line-height:1.4}
+.hn .stg{font-size:11px;color:var(--faint)}
+.hp{padding:10px 12px;display:flex;flex-wrap:wrap;align-content:flex-start;gap:6px;font-size:13px}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px 3px 7px;border-radius:7px;background:var(--elbg);border:1px solid color-mix(in srgb,var(--el) 45%,var(--panel));white-space:nowrap;line-height:1.3}
+.chip .sym{font-size:14px}
+.chip .d{font-size:11.5px;color:var(--muted)}
+.chip.star{background:var(--panel);border-style:dashed}
+.hp .p{display:flex;gap:4px 6px;align-items:baseline;flex-wrap:wrap}
+.hp .p .sym{width:16px;text-align:center;font-size:15px}
+.hp .p .d{color:var(--muted);font-size:12px}
+.hp .none{color:var(--faint);font-size:12px}
+.hp .p.star{color:var(--muted)}
+.rib{position:relative;display:flex;flex-direction:column;border-left:1px solid var(--line);border-right:1px solid var(--line)}
+.seg{position:relative;flex-basis:0;min-height:3px;overflow:hidden;background:var(--elbg);border-left:4px solid var(--el);border-right:4px solid var(--el)}
+.seg.start{box-shadow:inset 0 2px 0 var(--el)}
+.seg .lb{position:absolute;left:6px;top:4px;font-size:12px;font-weight:700;white-space:nowrap;line-height:1.25}
+.seg .lb .sym{font-size:13px;margin-right:2px}
+.seg .lb small{display:block;font-weight:400;font-size:10.5px;color:var(--muted)}
+.rib .cut{position:absolute;left:0;right:0;top:0;border-top:1.5px dashed var(--rowline);pointer-events:none}
+.mk{position:absolute;right:calc(8px + var(--n,0) * 24px);transform:translateY(-50%);width:22px;height:22px;border-radius:50%;background:var(--panel);border:1.5px solid var(--faint);display:grid;place-items:center;font-size:12.5px;z-index:2}
+.mk.ruler{background:var(--ruler);border-color:var(--ruler-line)}
+.mk.star{border-style:dashed;border-color:var(--muted);color:var(--muted)}
+.hd{padding:10px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.combo{font-size:14.5px;line-height:1.7}
+.combo .sc{display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:700;color:var(--el);background:var(--elbg);border:1px solid color-mix(in srgb,var(--el) 45%,var(--panel));border-radius:7px;padding:1px 8px 1px 6px;margin-right:8px;vertical-align:1px;white-space:nowrap}
+.combo .tag{display:inline-block;font-size:10.5px;border:1px solid var(--magenta);color:var(--magenta);border-radius:999px;padding:0 7px;font-weight:700;margin-right:8px;vertical-align:1px;white-space:nowrap}
+.flow{font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:2px 6px;align-items:center;margin-top:2px}
+.flow::before{content:"流れ";font-size:10.5px;letter-spacing:.08em;color:var(--faint);margin-right:2px}
+.flow span:not(.ar){color:var(--el);font-weight:700}
+.flow .ar{color:var(--faint)}
+.combo.minor{font-size:13.5px;color:var(--muted)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);align-items:center}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;background:color-mix(in srgb,var(--el) 40%,var(--panel));border:2px solid var(--el);vertical-align:-2px;margin-right:4px}
+
+.rulers{display:flex;flex-direction:column;gap:8px}
+.rulers h2{font-size:11px;letter-spacing:.12em;color:var(--faint);font-weight:700;margin:0}
+.rtab{border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:13px;width:100%;max-width:360px}
+.rtab th{font-size:11px;font-weight:700;color:var(--faint);text-align:left;padding:6px 12px;border-bottom:1px solid var(--rowline)}
+.rtab td{padding:4px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+.rtab tr:last-child td{border-bottom:0}
+.rtab td.s{color:var(--el);font-weight:700}
+.rtab td.o{color:var(--muted)}
+@media (max-width:860px){
+  .overview{grid-template-columns:1fr}
+  .wheel svg{max-width:420px}
+}
+@media (max-width:640px){
+  .lhead{display:none}
+  .hrow{grid-template-columns:52px 70px minmax(0,1fr);grid-template-areas:"n r d";min-height:110px}
+  .hn{grid-area:n;padding:10px 8px}
+  .hn b{font-size:22px}
+  .hn .th,.hn .stg{display:none}
+  .seg .lb{font-size:11px;left:3px}
+  .mk{width:19px;height:19px;font-size:11px;right:calc(3px + var(--n,0) * 21px)}
+  .rib{grid-area:r}
+  .hp{grid-area:p;padding:8px 10px 0}
+  .hd{grid-area:d;padding:6px 10px 10px}
+  .seg .lb small{display:none}
+  .cusps{column-gap:10px}
+}
+@media (prefers-reduced-motion:no-preference){.tabs button{transition:background .15s,border-color .15s}}
+
+/* Revised local practice edition — mobile first, no percentage labels. */
+html { scroll-padding-top:78px; }
+.wrap { max-width:1000px; }
+.tabs { position:sticky; top:0; z-index:20; background:var(--bg); padding:10px 0; margin-top:-6px; }
+.tabs button { min-height:44px; padding:8px 17px; }
+.quicknav { display:flex; align-items:center; flex-wrap:wrap; gap:8px 16px; font-size:13px; }
+.quicknav a { color:var(--accent); text-underline-offset:4px; padding:5px 0; }
+.quicknav label { margin-left:auto; color:var(--muted); }
+.quicknav select { font:inherit; font-size:16px; min-height:36px; border:1px solid var(--line); border-radius:7px; background:var(--panel); color:var(--fg); padding:3px 7px; }
+.wheel-wrap { min-width:0; }
+.precision-note { font-size:12px; color:var(--muted); margin:8px 4px 0; line-height:1.65; }
+.house-topic { font-size:12px; color:var(--accent); margin-bottom:3px; line-height:1.6; }
+.combo { text-wrap:pretty; }
+.guide { padding:16px; border:1px solid var(--line); border-radius:14px; background:var(--panel); }
+.guide summary { color:var(--accent); cursor:pointer; font-weight:700; min-height:28px; }
+.guide p { color:var(--muted); font-size:13px; }
+.guide h2 { font-size:15px; margin-top:24px; }
+.guide dl { margin:12px 0; }
+.guide dt { font-size:13px; font-weight:700; color:var(--accent); margin-top:14px; }
+.guide dd { font-size:14px; margin:3px 0 0; }
+.hrow { scroll-margin-top:78px; }
+@media(max-width:640px) {
+ .wrap { padding:16px 12px 42px; gap:14px; }
+ header.top h1 { font-size:23px; }
+ header.top .meta { font-size:12px; }
+ .hrow { grid-template-columns:42px 66px minmax(0,1fr); }
+ .hn { padding:12px 5px; } .hn b { font-size:23px; }
+ .hd { padding:12px 10px 14px; gap:11px; }
+ .combo { font-size:14px; line-height:1.85; } .combo.minor { font-size:14px; }
+ .combo .sc { font-size:11px; margin-right:5px; padding-inline:5px; }
+ .flow { font-size:11px; gap:4px; }
+ .databox { padding:12px 10px; font-size:12px; }
+ table.pl td { padding:6px 2px; } table.pl td:first-child { width:20px; }
+ .cusps { column-gap:6px; font-size:12px; }
+ .cusps div { grid-template-columns:18px 27px minmax(0,1fr); }
+ .seg .lb { left:2px; font-size:10px; }
+ .mk { right:calc(2px + var(--n,0)*20px); }
+ .rtab { max-width:none; }
+}
+@media(max-width:360px) {
+ .wrap { padding-inline:8px; }
+ .hrow { grid-template-columns:36px 56px minmax(0,1fr); }
+ .hd { padding-inline:8px; }
+ table.pl { font-size:11px; } table.pl td:first-child { width:16px; }
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>ホロスコープ練習帳</h1>
+    <span class="meta" id="meta"></span>
+  </header>
+  <nav class="tabs" id="tabs" role="tablist" aria-label="チャートを選ぶ"></nav>
+  <p class="note" id="note" hidden></p>
+  <nav class="quicknav" aria-label="見たい場所へ"><a href="#wheel">円盤</a><a href="#house-1">ハウスを読む</a><a href="#guide">言葉の手引き</a><label>室へ <select id="house-jump" aria-label="ハウスへ移動"><option value="1">1室</option><option value="2">2室</option><option value="3">3室</option><option value="4">4室</option><option value="5">5室</option><option value="6">6室</option><option value="7">7室</option><option value="8">8室</option><option value="9">9室</option><option value="10">10室</option><option value="11">11室</option><option value="12">12室</option></select></label></nav>
+  <section class="overview">
+    <div class="wheel-wrap"><div class="wheel" id="wheel"></div><p class="precision-note">目盛りが実位置。重なる記号は線で結んで離しています。円盤は度・分、天体表は元データの秒まで表示。</p></div>
+    <div class="databox">
+      <h2>ハウス・カスプ</h2>
+      <div class="cusps num" id="cusps"></div>
+      <h2>天体</h2>
+      <table class="pl num" id="planets" aria-label="天体の位置"></table>
+
+    </div>
+  </section>
+  <div class="legend"><span><i class="el-fire"></i>火</span><span><i class="el-earth"></i>地</span><span><i class="el-air"></i>風</span><span><i class="el-water"></i>水</span><span>帯の点線＝ハウスの境目　帯の太線＝サインの変わり目</span></div>
+  <section class="ledger" aria-label="ハウス一覧">
+    <div class="lhead"><div>ハウス</div><div>サイン</div><div>ハウス × サイン</div></div>
+    <div id="rows"></div>
+  </section>
+
+  <details id="guide" class="guide">
+    <summary>ハウスとサインの言葉を確かめる</summary>
+    <p>ハウスは「どんな場面・領域か」、サインは「どんな感じで関わるか」。読みの文章は練習のたたき台です。自分の実感と照らし合わせて、言葉を育ててください。</p>
+    <p>帯は各ハウス内のサインの広がりを示します。文章の「流れ」は帯に並ぶ順番で、年齢や出来事の時間順を決めるものではありません。</p>
+    <h2>12のハウス ― どんな領域？</h2><dl><dt>1室</dt><dd>自分をどう表し、世界に踏み出すか</dd><dt>2室</dt><dd>何を大切にし、自分の力として育てるか</dd><dt>3室</dt><dd>身近なことをどう知り、伝え合うか</dd><dt>4室</dt><dd>どこで安心し、何をよりどころにするか</dd><dt>5室</dt><dd>何を楽しみ、自分から生み出すか</dd><dt>6室</dt><dd>毎日の暮らしや仕事、体をどう整えるか</dd><dt>7室</dt><dd>一対一の相手とどう向き合うか</dd><dt>8室</dt><dd>誰かと深く関わり、何を分かち合うか</dd><dt>9室</dt><dd>未知を学び、ものの見方をどう広げるか</dd><dt>10室</dt><dd>社会でどんな役割を担い、形にするか</dd><dt>11室</dt><dd>仲間と何を目指し、未来につなぐか</dd><dt>12室</dt><dd>一人の時間や、言葉にならないものとどう付き合うか</dd></dl>
+    <h2>12のサイン ― どう関わる？</h2><dl><dt>牡羊 ― まずやってみる</dt><dd>考えながら待つより、まず動いて反応を確かめる。自分から始める力。</dd><dt>牡牛 ― じっくり育てる</dt><dd>五感で確かめ、時間をかけてなじませる。心地よいものを保ち育てる力。</dd><dt>双子 ― 知って、つなぐ</dt><dd>違いに気づき、言葉にして、あれこれ試す。情報や人をつなぐ力。</dd><dt>蟹 ― 安心できる輪をつくる</dt><dd>親しみや気持ちを手掛かりにする。安心できる居場所や関係を育てる力。</dd><dt>獅子 ― 自分らしく表す</dt><dd>好きなことや自分の思いを、見える形で表す。自分の中心から生み出す力。</dd><dt>乙女 ― 確かめて整える</dt><dd>よく観察して違いを確かめる。具体的に手を入れ、使いやすく整える力。</dd><dt>天秤 ― 違いを見て釣り合いを探す</dt><dd>自分と相手、複数の選択肢を見比べる。違いを尊重し、納得できる関係を探す力。</dd><dt>蠍 ― 深く関わる</dt><dd>表面だけでは終わらず、大切なものに深く関わる。関係を通して変わっていく力。</dd><dt>射手 ― 遠くへ広げる</dt><dd>今いる場所や知っている考えの先へ進む。経験を広げ、その意味を探す力。</dd><dt>山羊 ― 続けて形にする</dt><dd>目標と現実を見比べ、一歩ずつ積み上げる。責任を持って形にする力。</dd><dt>水瓶 ― 別のやり方を考える</dt><dd>当たり前を少し離れて見直す。一人ひとりの違いを生かす、新しい仕組みを考える力。</dd><dt>魚 ― 感じて受け止める</dt><dd>はっきり分けにくい気持ちや雰囲気も受け取る。想像や共感を通してつながる力。</dd></dl>
+    <p>「インターセプト」は、あるサイン全体が一つのハウスの中に収まり、そのサインにハウスの入口がない配置の印です。</p>
+  </details>
+  <section class="rulers" aria-label="サインの支配星">
+    <h2>サインの支配星</h2>
+    <table class="rtab" id="rulers"></table>
+  </section>
+</div>
+
+<script>
+const RAW = [{"name":"あやこ","place":"札幌","note":"","txt":"SOURCE: astro.com\nLABEL: Aya\nLOCAL_TIME: 1984-12-23T01:50:00+09:00\nUTC_TIME: 1984-12-22T16:50:00Z\nPLACE: Sapporo, Japan\nCOORD: 43°04'N, 141°21'E\nLOCAL_SIDEREAL_TIME: 08:21:05\nZODIAC: tropical\nHOUSE: placidus\nNODE: true\nSun: Capricorn 1°02'18\"\nMoon: Capricorn 3°43'15\"\nMercury: Sagittarius 14°49'46\" R\nVenus: Aquarius 15°47'03\"\nMars: Aquarius 28°01'54\"\nJupiter: Capricorn 19°19'04\"\nSaturn: Scorpio 23°48'22\"\nUranus: Sagittarius 14°49'24\"\nNeptune: Capricorn 1°08'03\"\nPluto: Scorpio 4°08'33\"\nNode: Taurus 27°08'23\"\nChiron: Gemini 4°34'21\" R\nASC: Libra 27°15'\n2: Scorpio 25°05'\n3: Sagittarius 27°32'\nMC: Leo 2°59'\n11: Virgo 6°24'\n12: Libra 4°31'\n"},{"name":"あつこ","place":"群馬","note":"","txt":"SOURCE: astro.com\nLABEL: あつこ\nLOCAL_TIME: 1974-01-08T13:55:00+09:00\nUTC_TIME: 1974-01-08T04:55:00Z\nPLACE: Gunma, JAPAN\nCOORD: 36°24'N, 139°00'E\nLOCAL_SIDEREAL_TIME: 21:20:28\nZODIAC: tropical\nHOUSE: placidus\nNODE: true\nSun: Capricorn 17°31'47\"\nMoon: Cancer 12°57'47\"\nMercury: Capricorn 16°49'54\"\nVenus: Aquarius 10°51'36\" R\nMars: Taurus 5°17'11\"\nJupiter: Aquarius 16°00'24\"\nSaturn: Gemini 29°58'23\" R\nUranus: Libra 27°30'49\"\nNeptune: Sagittarius 8°34'03\"\nPluto: Libra 6°49'41\"\nNode: Sagittarius 28°34'21\"\nChiron: Aries 16°26'26\"\nASC: Gemini 8°58'\n2: Cancer 2°19'\n3: Cancer 23°49'\nMC: Aquarius 17°40'\n11: Pisces 17°59'\n12: Aries 27°20'\n"},{"name":"えみりちゃん","place":"札幌","note":"","txt":"SOURCE: astro.com\nLABEL: えみりちゃん\nLOCAL_TIME: 1991-08-09T12:56:00+09:00\nUTC_TIME: 1991-08-09T03:56:00Z\nPLACE: Sapporo, JAPAN\nCOORD: 43°04'N, 141°21'E\nLOCAL_SIDEREAL_TIME: 10:30:01\nZODIAC: tropical\nHOUSE: placidus\nNODE: true\nSun: Leo 16°05'29\"\nMoon: Leo 2°58'45\"\nMercury: Virgo 5°50'55\" R\nVenus: Virgo 6°09'32\" R\nMars: Virgo 15°18'26\"\nJupiter: Leo 22°35'43\"\nSaturn: Aquarius 2°32'38\" R\nUranus: Capricorn 10°30'06\" R\nNeptune: Capricorn 14°33'56\" R\nPluto: Scorpio 17°35'57\"\nNode: Capricorn 18°48'32\"\nChiron: Leo 2°08'27\"\nASC: Scorpio 21°58'\n2: Sagittarius 22°25'\n3: Capricorn 28°35'\nMC: Virgo 5°42'\n11: Libra 7°12'\n12: Scorpio 1°56'\n"},{"name":"はすみん","place":"埼玉・川口","note":"","txt":"SOURCE: astro.com\nLABEL: はすみん\nLOCAL_TIME: 1988-04-16T05:15:00+09:00\nUTC_TIME: 1988-04-15T20:15:00Z\nPLACE: Kawaguchi (Saitama), JAPAN\nCOORD: 35°48'N, 139°42'E\nLOCAL_SIDEREAL_TIME: 19:10:39\nZODIAC: tropical\nHOUSE: placidus\nNODE: true\nSun: Aries 26°04'07\"\nMoon: Aries 17°15'28\"\nMercury: Aries 20°47'27\"\nVenus: Gemini 11°14'21\"\nMars: Aquarius 6°00'12\"\nJupiter: Taurus 8°36'06\"\nSaturn: Capricorn 2°32'05\" R\nUranus: Capricorn 0°59'43\" R\nNeptune: Capricorn 10°11'21\" R\nPluto: Scorpio 11°37'31\" R\nNode: Pisces 22°49'23\"\nChiron: Gemini 24°34'50\"\nASC: Aries 27°19'\n2: Gemini 0°05'\n3: Gemini 24°13'\nMC: Capricorn 16°17'\n11: Aquarius 10°49'\n12: Pisces 13°08'\n"},{"name":"ひで","place":"栃木","note":"","txt":"SOURCE: astro.com\nLABEL: ひで\nLOCAL_TIME: 1975-12-26T10:14:00+09:00\nUTC_TIME: 1975-12-26T01:14:00Z\nPLACE: Tochigi (Tochigi), JAPAN\nCOORD: 36°23'N, 139°44'E\nLOCAL_SIDEREAL_TIME: 16:48:38\nZODIAC: tropical\nHOUSE: placidus\nNODE: true\nSun: Capricorn 3°37'39\"\nMoon: Libra 9°17'34\"\nMercury: Capricorn 18°35'41\"\nVenus: Scorpio 22°16'47\"\nMars: Gemini 19°08'41\" R\nJupiter: Aries 15°09'43\"\nSaturn: Leo 1°28'47\" R\nUranus: Scorpio 6°09'12\"\nNeptune: Sagittarius 12°19'06\"\nPluto: Libra 11°35'57\"\nNode: Scorpio 20°57'58\"\nChiron: Aries 23°37'35\" R\nASC: Pisces 2°10'\n2: Aries 16°43'\n3: Taurus 19°05'\nMC: Sagittarius 13°33'\n11: Capricorn 5°29'\n12: Capricorn 29°28'\n"},{"name":"谷ちゃん","place":"東京・吉祥寺","note":"","txt":"SOURCE: astro.com\nLABEL: たにちゃん\nLOCAL_TIME: 1983-11-08T07:56:00+09:00\nUTC_TIME: 1983-11-07T22:56:00Z\nPLACE: Kichijoji (Tokyo), JAPAN\nCOORD: 35°42'N, 139°35'E\nLOCAL_SIDEREAL_TIME: 11:20:37\nZODIAC: tropical\nHOUSE: placidus\nNODE: true\nSun: Scorpio 14°57'39\"\nMoon: Sagittarius 22°16'42\"\nMercury: Scorpio 19°58'39\"\nVenus: Virgo 28°27'27\"\nMars: Virgo 23°46'43\"\nJupiter: Sagittarius 13°50'59\"\nSaturn: Scorpio 8°09'53\"\nUranus: Sagittarius 7°53'59\"\nNeptune: Sagittarius 27°25'21\"\nPluto: Scorpio 0°04'55\"\nNode: Gemini 16°08'39\"\nChiron: Gemini 1°09'47\" R\nASC: Sagittarius 5°48'\n2: Capricorn 7°31'\n3: Aquarius 13°31'\nMC: Virgo 19°17'\n11: Libra 19°48'\n12: Scorpio 14°35'\n"},{"name":"みなこ","place":"函館","note":"出生時刻は不明なので、正午（12:00）で出しています。ハウスとASCは仮のものです。月は17時半ごろに蠍座から射手座へ移るので、それより後の生まれなら射手座の月です。","txt":"SOURCE: Swiss Ephemeris（Claude計算）\nLABEL: みなこ\nLOCAL_TIME: 1977-09-18T12:00:00+09:00\nPLACE: Hakodate, JAPAN\nZODIAC: tropical\nHOUSE: placidus\nNODE: true\nSun: Virgo 25°05'33\"\nMoon: Scorpio 26°45'19\"\nMercury: Virgo 7°54'24\"\nVenus: Leo 24°32'16\"\nMars: Cancer 10°15'02\"\nJupiter: Cancer 4°03'36\"\nSaturn: Leo 24°51'00\"\nUranus: Scorpio 9°21'32\"\nNeptune: Sagittarius 13°31'18\"\nPluto: Libra 13°20'03\"\nNode: Libra 15°20'42\"\nChiron: Taurus 5°04'53\" R\nASC: Sagittarius 12°36'\n2: Capricorn 16°51'\n3: Aquarius 26°34'\nMC: Libra 2°53'\n11: Scorpio 1°11'\n12: Scorpio 23°22'\n"},{"name":"保江さん","place":"岡山","note":"出生時刻は不明なので、正午（12:00）で出しています。ハウスとASCは仮のものです。月は何時の生まれでも獅子座です。","txt":"SOURCE: Swiss Ephemeris（Claude計算）\nLABEL: 保江さん\nLOCAL_TIME: 1951-09-27T12:00:00+09:00\nPLACE: Okayama, JAPAN\nZODIAC: tropical\nHOUSE: placidus\nNODE: true\nSun: Libra 3°12'05\"\nMoon: Leo 16°33'51\"\nMercury: Virgo 20°14'31\"\nVenus: Virgo 2°11'20\"\nMars: Leo 25°07'07\"\nJupiter: Aries 9°57'20\" R\nSaturn: Libra 5°11'18\"\nUranus: Cancer 13°44'43\"\nNeptune: Libra 18°40'07\"\nPluto: Leo 20°47'43\"\nNode: Pisces 9°45'29\"\nChiron: Sagittarius 27°17'47\"\nASC: Sagittarius 18°04'\n2: Capricorn 21°37'\n3: Aquarius 29°07'\nMC: Libra 4°22'\n11: Scorpio 3°16'\n12: Scorpio 26°53'\n"},{"name":"はせくらさん","place":"帯広","note":"出生時刻は「朝」との資料に合わせ、元のastro.com図と同じ8:00で仮置きしています。ASC・ハウスの境界と天体のハウス配置は8:00を前提にした暫定のものです。","txt":"SOURCE: astro.com（提供画像の数表から転記）\nLABEL: はせくらさん\nLOCAL_TIME: 1963-01-16T08:00:00+09:00\nUTC_TIME: 1963-01-15T23:00:00Z\nPLACE: Obihiro, Japan\nCOORD: 42°55'N, 143°12'E\nZODIAC: tropical\nHOUSE: placidus\nNODE: true\nSun: Capricorn 25°04'59\"\nMoon: Libra 4°26'53\"\nMercury: Aquarius 4°45'59\" R\nVenus: Sagittarius 8°26'54\"\nMars: Leo 21°56'10\" R\nJupiter: Pisces 11°51'08\"\nSaturn: Aquarius 11°37'33\"\nUranus: Virgo 4°44'00\" R\nNeptune: Scorpio 15°23'20\"\nPluto: Virgo 11°53'51\" R\nNode: Cancer 29°40'02\"\nChiron: Pisces 7°48'04\"\nASC: Aquarius 14°25'\n2: Aries 4°17'\n3: Taurus 10°02'\nMC: Sagittarius 4°50'\n11: Sagittarius 25°24'\n12: Capricorn 16°26'\n"}];
+
+const SIGNS = [
+  { k:"Aries", ja:"牡羊", g:"♈", el:"fire", stg:"まずやってみる" },
+  { k:"Taurus", ja:"牡牛", g:"♉", el:"earth", stg:"じっくり育てる" },
+  { k:"Gemini", ja:"双子", g:"♊", el:"air", stg:"知って、つなぐ" },
+  { k:"Cancer", ja:"蟹", g:"♋", el:"water", stg:"安心できる輪をつくる" },
+  { k:"Leo", ja:"獅子", g:"♌", el:"fire", stg:"自分らしく表す" },
+  { k:"Virgo", ja:"乙女", g:"♍", el:"earth", stg:"確かめて整える" },
+  { k:"Libra", ja:"天秤", g:"♎", el:"air", stg:"違いを見て釣り合いを探す" },
+  { k:"Scorpio", ja:"蠍", g:"♏", el:"water", stg:"深く関わる" },
+  { k:"Sagittarius", ja:"射手", g:"♐", el:"fire", stg:"遠くへ広げる" },
+  { k:"Capricorn", ja:"山羊", g:"♑", el:"earth", stg:"続けて形にする" },
+  { k:"Aquarius", ja:"水瓶", g:"♒", el:"air", stg:"別のやり方を考える" },
+  { k:"Pisces", ja:"魚", g:"♓", el:"water", stg:"感じて受け止める" },
+];
+const RULERS = [["Mars"], ["Venus"], ["Mercury"], ["Moon"], ["Sun"], ["Mercury"], ["Venus"], ["Pluto", "Mars"], ["Jupiter"], ["Saturn"], ["Uranus", "Saturn"], ["Neptune", "Jupiter"]];
+const rulerOf = (ch) => RULERS[Math.floor(mod(ch.c[1]) / 30) % 12][0];
+const PLANETS = [
+  { k:"Sun", pc:"#e8a020", ja:"太陽", g:"☉" }, { k:"Moon", pc:"#d8709a", ja:"月", g:"☽" }, { k:"Mercury", pc:"#87CEEB", ja:"水星", g:"☿" },
+  { k:"Venus", pc:"#c08030", ja:"金星", g:"♀" }, { k:"Mars", pc:"#d04030", ja:"火星", g:"♂" }, { k:"Jupiter", pc:"#5a9850", ja:"木星", g:"♃" },
+  { k:"Saturn", pc:"#9050b0", ja:"土星", g:"♄" }, { k:"Uranus", pc:"#5070c0", ja:"天王星", g:"♅" }, { k:"Neptune", pc:"#40b0b0", ja:"海王星", g:"♆" },
+  { k:"Pluto", pc:"#800000", ja:"冥王星", g:"♇" }, { k:"Chiron", pc:"#c9a05a", ja:"キロン", g:"⚷" },
+  { k:"Node", pc:"#508060", ja:"ドラゴンヘッド", g:"☊" }, { k:"Tail", pc:"#706050", ja:"ドラゴンテイル", g:"☋" },
+];
+const HOUSES = [null,{"th":"自分をどう表し、世界に踏み出すか"},{"th":"何を大切にし、自分の力として育てるか"},{"th":"身近なことをどう知り、伝え合うか"},{"th":"どこで安心し、何をよりどころにするか"},{"th":"何を楽しみ、自分から生み出すか"},{"th":"毎日の暮らしや仕事、体をどう整えるか"},{"th":"一対一の相手とどう向き合うか"},{"th":"誰かと深く関わり、何を分かち合うか"},{"th":"未知を学び、ものの見方をどう広げるか"},{"th":"社会でどんな役割を担い、形にするか"},{"th":"仲間と何を目指し、未来につなぐか"},{"th":"一人の時間や、言葉にならないものとどう付き合うか"}];
+const AXES = { 1:"ASC", 4:"IC", 7:"DSC", 10:"MC" };
+// 12 houses × 12 signs (牡羊→魚). 下書き：あとで自分の言葉に直していく前提
+const WORDS = {
+  "1": [
+    "まず動いてみることで、自分が何者かをつかんでいく。",
+    "好き嫌いや体の感覚を頼りに、自分の輪郭を確かめていく。",
+    "人と話し、いろいろな自分を試しながら、自分らしさを知っていく。",
+    "安心できる相手や場所とのつながりから、自分らしさが育つ。",
+    "好きなことや思いを表に出して、自分の存在を実感する。",
+    "自分の反応をよく見て、振る舞いや暮らし方を少しずつ整える。",
+    "他者との関係を通して、自分の立ち位置や輪郭を見つける。",
+    "深く関わる経験を通して、自分という存在の捉え方も変わっていく。",
+    "知らない世界へ踏み出すたび、自分の可能性が広がっていく。",
+    "引き受けた役割や、積み重ねた行動を通して、自分を形にする。",
+    "周りの当たり前から少し離れ、自分に合う生き方を探す。",
+    "人や場の雰囲気を感じ取りながら、自分のあり方を柔らかく変える。"
+  ],
+  "2": [
+    "欲しいものや身につけたい力を、自分から取りにいく。",
+    "心地よいものや得意なことを、時間をかけて自分の土台にする。",
+    "情報や経験を集め、いくつもの得意なことを育てる。",
+    "安心できる暮らしのために、大切なものを蓄え、守る。",
+    "好きなことや自分ならではの表現に、価値を見いだす。",
+    "持っているものや技術を見直し、実際に役立つ形へ磨く。",
+    "比べたり、人と話したりしながら、自分が大切にしたいものを選ぶ。",
+    "自分にとって本当に大切なものを見極め、深く関わりながら育てる。",
+    "学びや旅など、可能性を広げる経験に価値を見いだす。",
+    "時間をかけて技術や資産を積み上げ、頼れる土台にする。",
+    "世間の評価に縛られず、自分なりの価値や稼ぎ方を考える。",
+    "形ある物だけでなく、感性や思いやり、目に見えない豊かさも大切にする。"
+  ],
+  "3": [
+    "気になったことは、すぐ聞き、試し、率直な言葉で伝える。",
+    "実際に触れたり繰り返したりして、納得できるまで身につける。",
+    "身近な違いを面白がり、情報や会話を次々につなげる。",
+    "言葉の内容だけでなく、相手の気持ちや親しみも受け取る。",
+    "感じたことを、自分の言葉や物語で生き生きと伝える。",
+    "細かな違いを確かめ、順序立てて理解し、分かりやすく伝える。",
+    "いくつかの見方を並べ、相手との対話で考えを整える。",
+    "気になることを深く調べ、表面の言葉の奥にある意味を探る。",
+    "身近な出来事から、大きな意味や遠い世界へのつながりを考える。",
+    "知ったことを整理して、実際に使える知識や手順にする。",
+    "決まった見方にとらわれず、意外なつながりや新しい説明を探す。",
+    "言葉にならない気配やイメージも受け取り、連想しながら理解する。"
+  ],
+  "4": [
+    "自分の意思で動ける場所をつくることで、安心を得る。",
+    "なじみの物や変わらない生活のリズムに、落ち着きを感じる。",
+    "話せること、知れること、気軽に行き来できることが居場所の条件になる。",
+    "気持ちを分かち合い、世話をし合える関係をよりどころにする。",
+    "自分らしくいられ、好きなことを大切にできる居場所をつくる。",
+    "暮らしの細部を整え、日々を無理なく回せる状態に安心する。",
+    "互いを尊重し、穏やかに話し合える関係を居場所の土台にする。",
+    "本音まで分かち合える深いつながりを、心のよりどころにする。",
+    "新しい経験や考えを受け入れ、いつでも広がれる居場所を求める。",
+    "続けられる暮らしの仕組みや責任を引き受け、生活の土台を築く。",
+    "家族や慣習の形に縛られず、自分に合う居場所をつくる。",
+    "一人で緩んだり、気持ちを説明せず受け止めてもらえたりする場所で休まる。"
+  ],
+  "5": [
+    "思いついたことを、まずやってみる。挑戦そのものを楽しむ。",
+    "手触りや音、味などを楽しみ、好きなものをじっくり育てる。",
+    "言葉やアイデアを組み合わせ、試しながら遊びを広げる。",
+    "心にある気持ちや思い出を温め、作品や楽しみとして育てる。",
+    "自分の好きや喜びを、堂々と表現することを楽しむ。",
+    "工夫して手を入れ、前よりよくできることに喜びを感じる。",
+    "美しさや人との掛け合いから、楽しみや表現を生み出す。",
+    "心を強く動かすものに没頭し、深い体験を表現にする。",
+    "冒険したり、新しい世界を知ったりすることから楽しみが広がる。",
+    "練習を重ね、作品や技術など、残る形に仕上げることを楽しむ。",
+    "普通とは違う発想や、仲間と試す新しい遊びを楽しむ。",
+    "空想や音楽、物語に浸り、浮かんだイメージから表現を生み出す。"
+  ],
+  "6": [
+    "やるべきことにまず着手し、動きながら毎日の調子をつかむ。",
+    "無理なく続く習慣や、体に合うペースで日々を支える。",
+    "いくつかの作業を切り替え、情報や会話を使って日々を回す。",
+    "自分や周りの人の調子を気にかけ、世話をすることで日々を整える。",
+    "自分の役割に誇りを持ち、工夫を生かして日々の仕事に取り組む。",
+    "小さな不具合に気づき、手順や体調をこまめに調整する。",
+    "一人で抱えず、分担や人との釣り合いを見ながら日々を整える。",
+    "気になる問題に腰を据えて向き合い、根本から立て直す。",
+    "学びや変化を取り入れ、目的を感じられる日々のやり方を探す。",
+    "優先順位や手順を決め、続けられる仕組みで日々を支える。",
+    "慣れた方法を見直し、自分に合う道具や仕組みで負担を減らす。",
+    "その日の感覚や周囲の様子に合わせて、柔軟にペースを調整する。"
+  ],
+  "7": [
+    "相手に自分から働きかけ、率直に向き合うことで関係を始める。",
+    "時間をかけて信頼を積み重ね、落ち着いて付き合える関係を育てる。",
+    "話し合い、知り合い、互いの新しい面を見つけ続ける。",
+    "気持ちを受け止め合い、身内のように安心できる関係を求める。",
+    "互いの個性や良さを認め、遠慮せず自分を表せる関係を求める。",
+    "具体的に助け合い、小さな行き違いを調整しながら付き合う。",
+    "互いの意見を聞き、対等で納得できる関係をつくる。",
+    "表面的な付き合いではなく、本音や弱さまで分かち合う関係を求める。",
+    "違う経験や考えを交換し、互いの世界が広がる関係を求める。",
+    "約束や責任を大切にし、長く信頼できる関係を築く。",
+    "違いと一人の時間を尊重し、自由を保ちながらつながる。",
+    "言葉で説明しきれない気持ちにも寄り添い、相手を受け止める。"
+  ],
+  "8": [
+    "遠慮して待つより、自分から一歩踏み込み、深い関係を始める。",
+    "時間やお金、暮らしなど、具体的なものを分かち合って信頼を深める。",
+    "共有しているものや互いの事情を、言葉で確かめながら関わる。",
+    "相手から受け取った思いや、受け継いだものを大切に抱える。",
+    "深く関わる中でも、自分の喜びや意思を失わずに分かち合う。",
+    "共有するお金や役割、互いの負担を整理し、安心して関われる形にする。",
+    "与えることと受け取ることを話し合い、納得できる分かち合い方を探す。",
+    "本音や弱さまで共有し、深い関わりを通して自分も変わっていく。",
+    "自分だけでは得られない経験を受け取り、人生の捉え方を広げる。",
+    "人から託されたものや共同の責任を、長く支えられる形で引き受ける。",
+    "親しさを所有や支配と結びつけず、新しい共有の形を考える。",
+    "言葉にしにくい悲しみや願いにも触れ、共感を通して深くつながる。"
+  ],
+  "9": [
+    "知らない場所や考えに、自分から飛び込んで確かめる。",
+    "実際の経験と照らし合わせながら、信じられる考えを育てる。",
+    "さまざまな情報や人の見方を集め、一つの答えに急がず学ぶ。",
+    "遠い文化や考えの中にも親しめるものを見つけ、自分の中へ取り入れる。",
+    "心を動かされた理想や考えを、自分の言葉で表現する。",
+    "広い考えも具体的な事実で確かめ、筋道を立てて理解する。",
+    "異なる文化や思想を比べ、どちらの見方にも耳を傾ける。",
+    "一つの問いを掘り下げ、自分の根底にある考えまで見直す。",
+    "旅や学びを通して視野を広げ、経験の意味を探し続ける。",
+    "学んだことを体系にまとめ、現実の行動や仕事へつなげる。",
+    "当たり前とされる考えを問い直し、もっと広く通じる見方を探す。",
+    "物語や芸術、祈りなどにも触れ、理屈だけでは捉えきれない世界を感じる。"
+  ],
+  "10": [
+    "誰かの指示を待たずに動き、社会の中で自分の役割を切り開く。",
+    "確かな仕事や技術を積み重ね、信頼できる立場を築く。",
+    "情報を伝え、人や分野をつなぐことで社会に関わる。",
+    "人を支え、安心して過ごせる場を育てる役割を担う。",
+    "自分ならではの表現や成果を、社会へ向けて打ち出す。",
+    "細かな課題に手を入れ、社会の中で役立つ形に仕上げる。",
+    "人と人の間を調整し、協力できる関係をつくる役割を担う。",
+    "難しい課題の核心に深く関わり、状況を変える仕事を担う。",
+    "学んだことや理想を伝え、人の視野や可能性を広げる役割を担う。",
+    "責任を引き受け、長く機能する成果や仕組みを築く。",
+    "既存の制度や働き方を見直し、新しい選択肢を社会へ示す。",
+    "人の思いをくみ取り、表現や支援を通して社会に関わる。"
+  ],
+  "11": [
+    "目指したいことをまず始め、同じ思いの仲間に働きかける。",
+    "気の合う仲間と、長く無理なく続くつながりを育てる。",
+    "さまざまな人や情報を結び、交流から新しい可能性を見つける。",
+    "互いを気にかけ、安心して参加できる仲間の輪を育てる。",
+    "仲間の中でも自分の個性を生かし、互いの表現を応援する。",
+    "必要な作業や改善を引き受け、仲間の活動を具体的に支える。",
+    "違う意見を持つ人も対等に参加できる関係をつくる。",
+    "強く共感する目的を持つ仲間と、深く力を合わせる。",
+    "理想や大きな目標を語り合い、仲間と可能性を広げる。",
+    "長期の目標や役割を整理し、活動が続く仕組みをつくる。",
+    "一人ひとりの違いや自由を保ち、目的を通してつながる。",
+    "所属の線を厳しく引かず、思いや共感で広く人とつながる。"
+  ],
+  "12": [
+    "人目のないところで、自分の小さな衝動や始めたい気持ちに気づく。",
+    "静かな時間や心地よい感覚に身を置き、内側の落ち着きを取り戻す。",
+    "一人で思いを言葉にしたり、連想をたどったりして心の中を知る。",
+    "表に出していない気持ちをいたわり、安心して休める時間を持つ。",
+    "誰に見せるためでもない、自分の喜びや創造性を大切にする。",
+    "見えないところの気掛かりを少しずつ片づけ、心を休めやすくする。",
+    "人に合わせる役割を離れ、自分の中の釣り合いや穏やかさを取り戻す。",
+    "普段は触れにくい強い思いや痛みと、静かに深く向き合う。",
+    "一人の時間に大きな問いを考え、出来事の意味を探す。",
+    "表に出ない役割や責任を振り返り、無理なく支えられる形を探す。",
+    "周囲の価値観から距離を取り、まだ形にならない自由な発想を育てる。",
+    "夢や音楽、言葉にならない感覚に身を置き、気持ちをゆっくりほどく。"
+  ]
+};
+
+const mod = (x) => ((x % 360) + 360) % 360;
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+const psym = (p) => `<span class="sym pcol" style="--pc:${p.pc || "var(--muted)"}">${p.g}\uFE0E</span>`;
+const sym = (g) => `<span class="sym">${g}︎</span>`;
+const signOf = (lon) => SIGNS[Math.floor(mod(lon) / 30) % 12];
+function fmtDeg(x, seconds = false) {
+  // Preserve the source arcseconds. Never round a minute into the next degree/sign.
+  const n = Math.floor((mod(x) % 30) * 3600 + 1e-6);
+  const d = Math.floor(n / 3600), m = Math.floor(n % 3600 / 60), s = n % 60;
+  return d + '°' + String(m).padStart(2, '0') + '′' + (seconds ? String(s).padStart(2, '0') + '″' : '');
+}
+const posTxt = (lon, seconds = false) => { const s = signOf(lon); return `<span class="sg el-${s.el}">${sym(s.g)}</span> ${fmtDeg(mod(lon) % 30, seconds)}`; };
+
+function parse(txt) {
+  const v = {}, kv = {};
+  txt.split(/\r?\n/).forEach((line) => {
+    const m = line.match(/^([A-Za-z0-9_]+):\s*([A-Za-z]+)\s+(\d+)°(\d+)'(?:(\d+)")?\s*(R)?/);
+    if (m && SIGNS.some((s) => s.k === m[2])) {
+      const si = SIGNS.findIndex((s) => s.k === m[2]);
+      v[m[1]] = { lon: si * 30 + +m[3] + +m[4] / 60 + (+m[5] || 0) / 3600, r: !!m[6] };
+    } else {
+      const k = line.match(/^([A-Z_]+):\s*(.+)$/); if (k) kv[k[1]] = k[2].trim();
+    }
+  });
+  const c = [];
+  c[1] = v.ASC.lon; c[2] = v["2"].lon; c[3] = v["3"].lon; c[10] = v.MC.lon; c[11] = v["11"].lon; c[12] = v["12"].lon;
+  [[4, 10], [5, 11], [6, 12], [7, 1], [8, 2], [9, 3]].forEach(([a, b]) => (c[a] = mod(c[b] + 180)));
+  const pl = PLANETS.map((p) => p.k === "Tail" ? { ...p, lon: mod(v.Node.lon + 180), r: false } : { ...p, lon: v[p.k].lon, r: p.k === "Node" ? false : v[p.k].r });
+  const t = kv.LOCAL_TIME || "";
+  const year = +t.slice(0, 4) + ((+t.slice(5, 7) || 1) - 1) / 12;
+  // アルキオーネ：生まれた年の位置（歳差 約50.3″/年）
+  const alc = { k:"Alcyone", ja:"アルキオーネ", g:"✶", lon: 59.993 + (year - 2000) * 0.013968, star: true };
+  return { kv, c, pl, alc };
+}
+function houseOf(c, lon) {
+  for (let i = 1; i <= 12; i++) {
+    const a = c[i], b = c[i % 12 + 1];
+    if (mod(lon - a) < mod(b - a)) return i;
+  }
+  return 1;
+}
+function houseSegs(c, i) {
+  const start = c[i], len = mod(c[i % 12 + 1] - start), segs = [];
+  let pos = start, rem = len;
+  while (rem > 1e-7) {
+    const inSign = mod(pos) % 30, si = Math.floor(mod(pos) / 30) % 12;
+    const take = Math.min(30 - inSign, rem);
+    if (take > 1e-7) segs.push({ s: SIGNS[si], si, from: inSign, to: inSign + take, deg: take });
+    pos = mod(pos + take); rem -= take;
+  }
+  return { len, segs };
+}
+
+/* ── wheel ── */
+function wheelSVG(ch, showAlc) {
+  const S = 460, C = S / 2, R0 = 222, R1 = 186, RP = 162, RH = 70, RI = 52;
+  const asc = ch.c[1];
+  const pt = (lon, r) => { const a = (180 + lon - asc) * Math.PI / 180; return [C + r * Math.cos(a), C - r * Math.sin(a)]; };
+  const f = (n) => n.toFixed(5);
+  let g = "";
+  for (let i = 0; i < 12; i++) {
+    const a = i * 30, b = a + 30, s = SIGNS[i];
+    const [x1, y1] = pt(a, R0), [x2, y2] = pt(b, R0), [x3, y3] = pt(b, R1), [x4, y4] = pt(a, R1);
+    g += `<path class="el-${s.el}" d="M${f(x1)} ${f(y1)}A${R0} ${R0} 0 0 0 ${f(x2)} ${f(y2)}L${f(x3)} ${f(y3)}A${R1} ${R1} 0 0 1 ${f(x4)} ${f(y4)}Z" style="fill:var(--elbg);stroke:var(--line)"/>`;
+    const [tx, ty] = pt(a + 15, R0 - 12), [nx, ny] = pt(a + 15, R1 + 9);
+    const th = 180 + a + 15 - asc; let rot = 90 - th; if (Math.sin(th * Math.PI / 180) < 0) rot += 180;
+    g += `<text x="${f(nx)}" y="${f(ny)}" transform="rotate(${f(rot)} ${f(nx)} ${f(ny)})" class="el-${s.el}" style="fill:var(--el);font-size:10px;font-weight:700;font-family:var(--f-body)" text-anchor="middle" dominant-baseline="central">${s.ja}</text>`;
+    g += `<text x="${f(tx)}" y="${f(ty)}" class="sym el-${s.el}" style="fill:var(--el);font-size:15px" text-anchor="middle" dominant-baseline="central">${s.g}︎</text>`;
+    for (let d = 5; d < 30; d += 5) { const [p1x, p1y] = pt(a + d, R1), [p2x, p2y] = pt(a + d, R1 - (d % 10 ? 4 : 7)); g += `<line x1="${f(p1x)}" y1="${f(p1y)}" x2="${f(p2x)}" y2="${f(p2y)}" style="stroke:var(--faint)" stroke-width="0.8"/>`; }
+  }
+  for (let i = 0; i < 12; i++) { const [sx1, sy1] = pt(i * 30, R0), [sx2, sy2] = pt(i * 30, R1); g += `<line x1="${f(sx1)}" y1="${f(sy1)}" x2="${f(sx2)}" y2="${f(sy2)}" style="stroke:var(--signline)" stroke-width="1.1"/>`; }
+  g += `<circle cx="${C}" cy="${C}" r="${R0}" style="fill:none;stroke:var(--signline)" stroke-width="1.1"/><circle cx="${C}" cy="${C}" r="${R1}" style="fill:none;stroke:var(--signline)" stroke-width="1.1"/><circle cx="${C}" cy="${C}" r="${RI}" style="fill:var(--panel);stroke:var(--line)"/>`;
+  for (let i = 1; i <= 12; i++) {
+    const ax = AXES[i], lon = ch.c[i];
+    const [x1, y1] = pt(lon, R1), [x2, y2] = pt(lon, RI);
+    g += `<line x1="${f(x1)}" y1="${f(y1)}" x2="${f(x2)}" y2="${f(y2)}" style="stroke:${ax ? "var(--fg)" : "var(--faint)"}" stroke-width="${ax ? 1.8 : 0.8}"/>`;
+    const mid = lon + mod(ch.c[i % 12 + 1] - lon) / 2, [hx, hy] = pt(mid, (RH + RI) / 2 + 4);
+    g += `<text x="${f(hx)}" y="${f(hy)}" style="fill:var(--muted);font-size:12px;font-family:var(--f-body)" text-anchor="middle" dominant-baseline="central">${i}</text>`;
+  }
+  [["ASC", 1], ["IC", 4], ["DSC", 7], ["MC", 10]].forEach(([t, i]) => {
+    const [x, y] = pt(ch.c[i], R0 + 17);
+    g += `<text x="${f(x)}" y="${f(y)}" style="fill:var(--accent);font-size:11px;font-weight:700;font-family:var(--f-body)" text-anchor="middle" dominant-baseline="central">${t}</text>`;
+  });
+  // planets, spread apart so glyphs don't collide
+  let items = ch.pl.concat(showAlc ? [ch.alc] : []).map((p) => ({ p, a: mod(p.lon - asc) })).sort((x, y) => x.a - y.a);
+  // Start after the widest empty arc, so a cluster crossing ASC stays together.
+  let gap = -1, first = 0;
+  items.forEach((x,i) => { const d = (i+1 < items.length ? items[i+1].a : items[0].a+360) - x.a;
+    if(d > gap) { gap=d; first=(i+1)%items.length; } });
+  items=items.slice(first).concat(items.slice(0,first));
+  const base=items[0].a; items=items.map(x=>({...x,a:x.a < base ? x.a+360 : x.a}));
+  // group nearby planets and fan each group out evenly around its centre
+  const GAP = 9.5;
+  let groups = items.map((x) => ({ sum: x.a, n: 1 }));
+  const st = (g) => g.sum / g.n - (g.n - 1) * GAP / 2;
+  for (let merged = true; merged;) {
+    merged = false;
+    for (let k = 0; k < groups.length - 1; k++) {
+      const A = groups[k], B = groups[k + 1];
+      if (st(B) - (st(A) + (A.n - 1) * GAP) < GAP) { groups.splice(k, 2, { sum: A.sum + B.sum, n: A.n + B.n }); merged = true; break; }
+    }
+  }
+  const disp = []; groups.forEach((g) => { for (let j = 0; j < g.n; j++) disp.push(st(g) + j * GAP); });
+  // Tick positions always use the exact source longitude. Only glyphs fan out.
+  items.forEach((x, k) => {
+    const lon = x.p.lon, dl = disp[k] + asc, tl = lon, pc = x.p.pc || "var(--faint)";
+    const [ax1, ay1] = pt(tl, R1), [ax2, ay2] = pt(tl, R1 - 10), [cx2, cy2] = pt(dl, RP + 5), [gx, gy] = pt(dl, RP - 6), [lx, ly] = pt(dl, RP - 27);
+    g += `<g data-point="${x.p.k}" data-longitude="${lon}" data-glyph-longitude="${mod(dl)}"><title>${esc(x.p.ja)} ${esc(signOf(lon).ja)} ${fmtDeg(mod(lon)%30,!x.p.star)}${x.p.r ? " R" : ""}${x.p.star ? "（概算）" : ""}</title>`;
+    g += `<line x1="${f(ax2)}" y1="${f(ay2)}" x2="${f(cx2)}" y2="${f(cy2)}" class="pstk" style="--pc:${pc}" stroke-width="0.8" stroke-opacity="0.55"/>`;
+    g += `<line data-position-tick="${x.p.k}" x1="${f(ax1)}" y1="${f(ay1)}" x2="${f(ax2)}" y2="${f(ay2)}" class="pstk" style="--pc:${pc}" stroke-width="1.5"/>`;
+    if (x.p.k === rulerOf(ch)) g += `<circle cx="${f(gx)}" cy="${f(gy)}" r="13" style="fill:var(--ruler)"/>`;
+    g += `<text x="${f(gx)}" y="${f(gy)}" class="sym pcol" style="--pc:${pc};font-size:18px" text-anchor="middle" dominant-baseline="central">${x.p.g}\uFE0E</text>`;
+    const dm=fmtDeg(mod(lon)%30).split('°');
+    g += `<text x="${f(lx)}" y="${f(ly)}" style="fill:var(--muted);font-size:9px;font-family:var(--f-body)" text-anchor="middle"><tspan x="${f(lx)}">${dm[0]}°</tspan><tspan x="${f(lx)}" dy="10">${dm[1]}${x.p.r ? 'R' : ''}</tspan></text></g>`;
+  });
+  return `<svg viewBox="-36 -36 ${S + 72} ${S + 72}" role="img" aria-label="ホロスコープの円盤">${g}</svg>`;
+}
+
+/* ── render ── */
+let cur = 0; const showAlc = true;
+try { cur = Math.max(0, Math.min(Math.floor(+localStorage.getItem("practice.v2.tab")) || 0, RAW.length - 1)); } catch (e) {}
+const CH = RAW.map((r) => ({ ...r, ...parse(r.txt) }));
+
+function render() {
+  const ch = CH[cur];
+  document.querySelectorAll("#tabs button").forEach((b, i) => { b.setAttribute("aria-selected", i === cur ? "true" : "false"); b.setAttribute("tabindex",i===cur ? "0" : "-1"); });
+  const lt = ch.kv.LOCAL_TIME || "";
+  $("#meta").textContent = `${lt.slice(0, 10).replace(/-/g, "/")} ${lt.slice(11, 16)}　${ch.place}　プラシーダス`;
+  $("#note").hidden = !ch.note; $("#note").textContent = ch.note || "";
+  $("#wheel").innerHTML = wheelSVG(ch, showAlc);
+
+  let cu = "";
+  [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].sort((a, b) => ((a - 1) % 6) - ((b - 1) % 6) || a - b).forEach((i) => {
+    cu += `<div><span class="h">${i}</span><span class="ax">${AXES[i] || ""}</span><span>${posTxt(ch.c[i])}</span></div>`;
+  });
+  $("#cusps").innerHTML = cu;
+  const list = ch.pl.concat(showAlc ? [ch.alc] : []);
+  $("#planets").innerHTML = list.map((p) => `<tr class="${p.star ? "star" : ""}"><td>${psym(p)}</td><td>${p.ja}</td><td>${posTxt(p.lon,!p.star)}${p.star ? ' <small>概算</small>' : ''}${p.r ? '<span class="r">R</span>' : ""}</td><td class="hs">${houseOf(ch.c, p.lon)}室</td></tr>`).join("");
+
+  let rows = "";
+  for (let i = 1; i <= 12; i++) {
+    const { len, segs } = houseSegs(ch.c, i);
+    const inH = list.filter((p) => houseOf(ch.c, p.lon) === i).sort((a, b) => mod(a.lon - ch.c[i]) - mod(b.lon - ch.c[i]));
+    const pls = inH.map((p) => { const s = signOf(p.lon); return `<span class="chip el-${s.el}${p.star ? " star" : ""}">${psym(p)}<span>${p.ja}</span>${sym(s.g)}<span class="d">${fmtDeg(mod(p.lon) % 30,!p.star)}</span>${p.r ? '<span class="r">R</span>' : ""}</span>`; }).join("");
+    const segH = segs.map((sg, k) => `<div class="seg el-${sg.s.el}${sg.from < 1e-6 ? " start" : ""}" style="flex-grow:${sg.deg.toFixed(3)}">${sg.deg / len < 0.2 ? "" : `<span class="lb">${sym(sg.s.g)}${sg.s.ja}</span>`}</div>`).join("");
+    // markers, nudged sideways when they sit on top of each other
+    const marks = []; let mk = "";
+    inH.forEach((p) => {
+      const t = mod(p.lon - ch.c[i]) / len * 100;
+      const near = marks.filter((m) => Math.abs(m - t) < 9).length; marks.push(t);
+      mk += `<span class="mk${p.star ? " star" : ""}${p.k === rulerOf(ch) ? " ruler" : ""}" style="top:${t.toFixed(6)}%;--n:${near}" title="${p.ja}">${psym(p)}</span>`;
+    });
+    const main = segs.reduce((a, b) => (b.deg > a.deg ? b : a));
+    const combos = segs.map((sg) => {
+      const inter = sg.from < 1e-6 && sg.to > 29.999 && sg !== segs[0];
+      const minor = sg !== main && sg.deg < 8 && !inter;
+      return `<div class="combo el-${sg.s.el}${minor ? " minor" : ""}"><span class="sc">${sym(sg.s.g)}${sg.s.ja}</span>${inter ? '<span class="tag">インターセプト</span>' : ""}${esc(WORDS[i][sg.si])}</div>`;
+    }).join("");
+    const flow = segs.length > 1 ? `<div class="flow">${segs.map((sg) => `<span class="el-${sg.s.el}">${sg.s.stg}</span>`).join('<span class="ar">→</span>')}</div>` : "";
+    rows += `<div class="hrow" id="house-${i}">
+      <div class="hn"><b>${i}<small>室</small></b>${AXES[i] ? `<span class="ax">${AXES[i]}</span>` : ""}<span class="th">${HOUSES[i].th}</span></div>
+      <div class="rib">${segH}<span class="cut"></span>${mk}</div>
+      <div class="hd"><div class="house-topic">${esc(HOUSES[i].th)}</div>${combos}${flow}</div>
+    </div>`;
+  }
+  $("#rows").innerHTML = rows;
+}
+function $(s) { return document.querySelector(s); }
+
+function switchPerson(index) {
+  const rows=[...document.querySelectorAll('.hrow')];
+  const edge=$('#tabs').getBoundingClientRect().bottom+8;
+  const anchor=rows.find(r=>r.getBoundingClientRect().bottom>edge);
+  const keep=anchor && anchor.getBoundingClientRect().top<window.innerHeight;
+  const oldTop=keep ? anchor.getBoundingClientRect().top : 0, id=anchor?.id;
+  cur=index; try { localStorage.setItem('practice.v2.tab',cur); } catch(e) {}
+  render();
+  if(keep) { const next=document.getElementById(id); window.scrollBy(0,next.getBoundingClientRect().top-oldTop); }
+}
+$('#house-jump').addEventListener('change',e=>document.getElementById('house-'+e.target.value).scrollIntoView({block:'start'}));
+$('#tabs').addEventListener('keydown',e=>{
+  const index=[...$('#tabs').children].indexOf(e.target);
+  if(index<0) return;
+  const next=e.key==='ArrowRight' ? (index+1)%CH.length : e.key==='ArrowLeft' ? (index+CH.length-1)%CH.length : e.key==='Home' ? 0 : e.key==='End' ? CH.length-1 : null;
+  if(next===null) return; e.preventDefault(); switchPerson(next); $('#tabs').children[next].focus();
+});
+$("#tabs").innerHTML = CH.map((c, i) => `<button type="button" role="tab" id="tab${i}">${esc(c.name)}</button>`).join("");
+$("#tabs").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  switchPerson([...$("#tabs").children].indexOf(b));
+});
+(() => {
+  const P = Object.fromEntries(PLANETS.map((p) => [p.k, p]));
+  const R = RULERS;
+  $("#rulers").innerHTML = `<tr><th>サイン</th><th>支配星</th><th>古典</th></tr>` + SIGNS.map((s, i) => {
+    const [m, old] = R[i];
+    return `<tr class="el-${s.el}"><td class="s">${sym(s.g)} ${s.ja}</td><td>${psym(P[m])} ${P[m].ja}</td><td class="o">${old ? `${psym(P[old])} ${P[old].ja}` : ""}</td></tr>`;
+  }).join("");
+})();
+render();
+</script>
+
+</body></html>
