@@ -133,7 +133,7 @@ svg .pcol{fill:var(--pc)} svg .pstk{stroke:var(--pc)}
 @media (prefers-reduced-motion:no-preference){.tabs button{transition:background .15s,border-color .15s}}
 
 /* Revised local practice edition — mobile first, no percentage labels. */
-html { scroll-padding-top:78px; }
+html { scroll-padding-top:78px; overflow-anchor:none; }
 .wrap { max-width:1000px; }
 .tabs { position:sticky; top:0; z-index:20; background:var(--bg); padding:10px 0; margin-top:-6px; }
 .tabs button { min-height:44px; padding:8px 17px; }
@@ -589,7 +589,8 @@ function $(s) { return document.querySelector(s); }
 function switchPerson(index) {
   const rows=[...document.querySelectorAll('.hrow')];
   const edge=$('#tabs').getBoundingClientRect().bottom+8;
-  const anchor=rows.find(r=>r.getBoundingClientRect().bottom>edge);
+  const visible=rows.filter(r=>r.getBoundingClientRect().bottom>edge && r.getBoundingClientRect().top<window.innerHeight);
+  const anchor=visible.reduce((best,r)=>!best || Math.abs(r.getBoundingClientRect().top-edge)<Math.abs(best.getBoundingClientRect().top-edge) ? r : best,null);
   const keep=anchor && anchor.getBoundingClientRect().top<window.innerHeight;
   const oldTop=keep ? anchor.getBoundingClientRect().top : 0, id=anchor?.id;
   cur=index; try { localStorage.setItem('practice.v2.tab',cur); } catch(e) {}
