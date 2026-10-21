@@ -18,6 +18,13 @@
 .point-dignity .dignity-neutral { color:var(--muted); }
 .dignity-guide { font-size:12px; line-height:1.8; color:var(--muted); margin:12px 0; }
 .dignity-guide summary { color:var(--accent); cursor:pointer; padding:6px 0; }
+.chart-ruler-symbol { display:inline-flex; align-items:center; justify-content:center; width:1.55em; height:1.55em; border-radius:50%; background:var(--ruler); vertical-align:middle; }
+.chart-ruler-symbol .sym { font-size:inherit; }
+.chart-ruler-badge { color:var(--accent); background:var(--ruler); border:1px solid var(--ruler-line); border-radius:12px; padding:2px 8px; font-size:11px; font-weight:700; }
+.chart-ruler-reading { border-left:3px solid var(--ruler-line); padding:4px 0 4px 12px; margin-top:12px; }
+.chart-ruler-reading p { font-size:13px; }
+.chart-ruler-reading .chart-ruler-label { color:var(--accent); font-weight:700; font-size:12px; }
+.chart-ruler-reading .ruler-provisional { color:var(--muted); font-size:12px; }
 </style></head><body>
 <title>ホロスコープ練習帳</title>
 
@@ -238,6 +245,7 @@ html { scroll-padding-top:78px; overflow-anchor:none; }
   <section class="planet-readings" aria-labelledby="planet-readings-title">
     <h2 id="planet-readings-title">天体の読み解き</h2>
     <p class="reading-intro">天体・サイン・ハウスを組み合わせた読みの例。度数は位置を示しています。</p>
+    <details class="dignity-guide"><summary>チャートルーラーの見方</summary><p>ASCのサインを支配する天体がチャートルーラーです。その天体のサインとハウスを、自分の振る舞いや生き方につながるテーマとして重ねて読みます。品位とは別の役割で、品位の加点ではありません。</p><p>丸い背景は円盤と同じ天体の印です。このツールでは蠍座＝冥王星、水瓶座＝天王星、魚座＝海王星の現代の支配星対応を使っています。伝統の対応ではそれぞれ火星・土星・木星です。</p></details>
     <details class="dignity-guide"><summary>品位の見方</summary><p>品位は、天体がそのサインで持ち味を発揮しやすいかを見る目安です。太陽〜土星は伝統的な本来の座・高揚・デトリメント・フォールを表示。天王星・海王星・冥王星は、現代の支配星対応による本来の座とデトリメントを〈現代〉と区別して表示します。</p><p>「該当なし」は弱いという意味ではありません。トリプリシティ・ターム・フェイスやハウスなどによる品位、相互の関係はこの欄では判定していません。ASCなどの軸・キロン・ノード・恒星は判定対象外です。R（逆行）とは別に表示します。</p></details>
     <p id="planet-readings-note" class="reading-intro" hidden></p>
     <div id="planet-reading-rows"></div>
@@ -657,6 +665,15 @@ function dignityHTML(p) {
   const modern=result.system!=='伝統';
   return `<div class="point-dignity" data-dignity-system="${result.system}" data-dignity-kinds="${result.kinds.join(' ')}">${result.kinds.length ? result.kinds.map(k=>`<p><span class="dignity-badge">${DIGNITY_WORDS[k][0]}${modern?'〈現代〉':''}</span></p><p>${DIGNITY_WORDS[k][1]}</p>`).join('') : `<p class="dignity-neutral">品位：${modern?'本来の座・デトリメント':'主要4区分'}に該当なし</p>`}</div>`;
 }
+function rulerSymbol(p,ch) {
+  return p.k===rulerOf(ch) ? `<span class="chart-ruler-symbol" title="チャートルーラー">${psym(p)}</span>` : psym(p);
+}
+function chartRulerHTML(p,ch,h) {
+  if(p.k!==rulerOf(ch)) return '';
+  const asc=signOf(ch.c[1]), s=signOf(p.lon);
+  const provisional=ch.note ? '<p class="ruler-provisional">出生時刻を仮置きしたチャートのため、ASC・チャートルーラーとそのハウスは暫定です。</p>' : '';
+  return `<div class="chart-ruler-reading"><p class="chart-ruler-label">チャートルーラーとして読むと</p><p>ASCが${asc.ja}座なので、その支配星・${p.ja}がチャートルーラーです。${s.ja}座らしい表し方と、${h}室（${PLANET_FIELDS[h]}）での経験を、自分らしい生き方を考える手がかりとして読みます。</p>${provisional}</div>`;
+}
 function renderPlanetReadings(ch) {
   const points=ch.pl.concat([ch.alc]);
   let out='';
@@ -670,7 +687,7 @@ function renderPlanetReadings(ch) {
       const si=Math.floor(mod(p.lon)/30), s=SIGNS[si], role=PLANET_ROLES[p.k];
       const text=p.star ? '恒星のアルキオーネ。ここでは位置の参考として表示します。天体と同じ定型文による読み解きは付けていません。' :
         `${PLANET_FIELDS[h]}の場面で、${PLANET_STYLES[si]}、${role[1]}。`;
-      entries.push(`<article class="point-reading" data-reading-point="${p.k}" data-reading-house="${h}" data-reading-longitude="${p.lon}"><h4><span class="point-name">${psym(p)} ${esc(p.ja)}</span><span class="el-${s.el}">${sym(s.g)} ${s.ja}座</span><span class="point-degree num">${fmtDeg(p.lon,!p.star)}${p.r?' <span class="r">R</span>':''}${p.star?' <small>概算</small>':''}</span></h4>${role?`<p class="point-role">${role[0]}</p>`:''}<p>${esc(text)}</p>${dignityHTML(p)}</article>`);
+      entries.push(`<article class="point-reading" data-reading-point="${p.k}" data-reading-house="${h}" data-reading-longitude="${p.lon}"><h4><span class="point-name">${rulerSymbol(p,ch)} ${esc(p.ja)}</span>${p.k===rulerOf(ch)?'<span class="chart-ruler-badge">チャートルーラー'+(ch.note?'（仮）':'')+'</span>':''}<span class="el-${s.el}">${sym(s.g)} ${s.ja}座</span><span class="point-degree num">${fmtDeg(p.lon,!p.star)}${p.r?' <span class="r">R</span>':''}${p.star?' <small>概算</small>':''}</span></h4>${role?`<p class="point-role">${role[0]}</p>`:''}<p>${esc(text)}</p>${chartRulerHTML(p,ch,h)}${dignityHTML(p)}</article>`);
     });
     out+=`<section class="planet-house" id="planet-house-${h}"><h3>${h}室 <span>${esc(HOUSES[h].th)}</span></h3>${entries.join('')||'<p class="empty-house">表示対象の天体はありません。</p>'}</section>`;
   }
@@ -693,7 +710,7 @@ function render() {
   });
   $("#cusps").innerHTML = cu;
   const list = ch.pl.concat(showAlc ? [ch.alc] : []);
-  $("#planets").innerHTML = list.map((p) => `<tr class="${p.star ? "star" : ""}"><td>${psym(p)}</td><td>${p.ja}</td><td>${posTxt(p.lon,!p.star)}${p.star ? ' <small>概算</small>' : ''}${p.r ? '<span class="r">R</span>' : ""}</td><td class="hs">${houseOf(ch.c, p.lon)}室</td></tr>`).join("");
+  $("#planets").innerHTML = list.map((p) => `<tr class="${p.star ? "star" : ""}"><td>${rulerSymbol(p,ch)}</td><td>${p.ja}</td><td>${posTxt(p.lon,!p.star)}${p.star ? ' <small>概算</small>' : ''}${p.r ? '<span class="r">R</span>' : ""}</td><td class="hs">${houseOf(ch.c, p.lon)}室</td></tr>`).join("");
 
   let rows = "";
   for (let i = 1; i <= 12; i++) {
