@@ -12,6 +12,12 @@
 .point-reading p { font-size:14px; line-height:1.9; margin:6px 0 0; overflow-wrap:anywhere; }
 .point-reading .point-role { color:var(--accent); font-size:12px; }
 .empty-house { padding:0 16px 12px; }
+.point-dignity { margin-top:12px; padding:10px 12px; background:var(--accent-soft); border-radius:8px; }
+.point-dignity p { font-size:12px; margin:4px 0; }
+.dignity-badge { font-weight:700; color:var(--accent); }
+.point-dignity .dignity-neutral { color:var(--muted); }
+.dignity-guide { font-size:12px; line-height:1.8; color:var(--muted); margin:12px 0; }
+.dignity-guide summary { color:var(--accent); cursor:pointer; padding:6px 0; }
 </style></head><body>
 <title>ホロスコープ練習帳</title>
 
@@ -212,7 +218,7 @@ html { scroll-padding-top:78px; overflow-anchor:none; }
   </header>
   <nav class="tabs" id="tabs" role="tablist" aria-label="チャートを選ぶ"></nav>
   <p class="note" id="note" hidden></p>
-  <nav class="quicknav" aria-label="見たい場所へ"><a href="#house-1">ハウス</a><a href="#guide">凡例</a></nav>
+  <nav class="quicknav" aria-label="見たい場所へ"><a href="#house-1">ハウス</a><a href="#planet-readings-title">天体</a><a href="#guide">凡例</a></nav>
   <section class="overview">
     <div class="wheel-wrap"><div class="wheel" id="wheel"></div><p class="precision-note">目盛りが実位置。重なる記号は線で結んで離しています。円盤は度・分、天体表は元データの秒まで表示。</p></div>
     <div class="databox">
@@ -232,6 +238,7 @@ html { scroll-padding-top:78px; overflow-anchor:none; }
   <section class="planet-readings" aria-labelledby="planet-readings-title">
     <h2 id="planet-readings-title">天体の読み解き</h2>
     <p class="reading-intro">天体・サイン・ハウスを組み合わせた読みの例。度数は位置を示しています。</p>
+    <details class="dignity-guide"><summary>品位の見方</summary><p>品位は、天体がそのサインで持ち味を発揮しやすいかを見る目安です。太陽〜土星は伝統的な本来の座・高揚・デトリメント・フォールを表示。天王星・海王星・冥王星は、現代の支配星対応による本来の座とデトリメントを〈現代〉と区別して表示します。</p><p>「該当なし」は弱いという意味ではありません。トリプリシティ・ターム・フェイスやハウスなどによる品位、相互の関係はこの欄では判定していません。ASCなどの軸・キロン・ノード・恒星は判定対象外です。R（逆行）とは別に表示します。</p></details>
     <p id="planet-readings-note" class="reading-intro" hidden></p>
     <div id="planet-reading-rows"></div>
   </section>
@@ -614,6 +621,42 @@ const PLANET_FIELDS = [null,'自分の振る舞い、身体感覚、世界への
   '専門的な学び、旅、思想、広い世界の捉え方','社会での役割、仕事、目指す立場','仲間との活動、共通の理想、未来への計画',
   '一人の時間、休息、表に出しにくい気持ち'];
 const ANGLE_ROLES = {1:'世界への入り口、最初に表れる振る舞い',4:'心のよりどころ、内側の土台',7:'一対一の関係で向き合う相手やテーマ',10:'社会へ向かう方向、担いたい役割'};
+// Traditional seven: domicile sign indices and exaltation sign index (Aries=0).
+const DIGNITY_POSITIONS = {
+  Sun:{home:[4],exalt:0}, Moon:{home:[3],exalt:1}, Mercury:{home:[2,5],exalt:5},
+  Venus:{home:[1,6],exalt:11}, Mars:{home:[0,7],exalt:9},
+  Jupiter:{home:[8,11],exalt:3}, Saturn:{home:[9,10],exalt:6}
+};
+// Modern rulership convention only; no agreed exaltation/fall assigned to outer planets.
+const MODERN_HOMES={Uranus:10,Neptune:11,Pluto:7};
+const DIGNITY_WORDS={
+  home:['本来の座（ドミサイル）','自分の家にいるように、この天体の持ち味を自然に使いやすい配置。'],
+  exalt:['高揚（エグザルテーション）','この天体の持ち味が引き立ち、力を発揮しやすい配置。'],
+  detriment:['障害（デトリメント）','本来の座の反対側。慣れたやり方が通じにくく、環境に合わせた工夫が必要な配置。'],
+  fall:['転落（フォール）','高揚の反対側。この天体の持ち味をそのまま出しにくく、表し方を育てていく配置。']
+};
+function dignityOf(key,lon) {
+  const si=Math.floor(mod(lon)/30), rule=DIGNITY_POSITIONS[key], kinds=[];
+  if(rule){
+    if(rule.home.includes(si)) kinds.push('home');
+    if(rule.exalt===si) kinds.push('exalt');
+    if(rule.home.some(s=>(s+6)%12===si)) kinds.push('detriment');
+    if((rule.exalt+6)%12===si) kinds.push('fall');
+    return {system:'伝統',kinds};
+  }
+  if(Object.hasOwn(MODERN_HOMES,key)) {
+    if(si===MODERN_HOMES[key]) kinds.push('home');
+    if(si===(MODERN_HOMES[key]+6)%12) kinds.push('detriment');
+    return {system:'現代の支配星対応',kinds};
+  }
+  return null;
+}
+function dignityHTML(p) {
+  const result=dignityOf(p.k,p.lon);
+  if(!result) return '';
+  const modern=result.system!=='伝統';
+  return `<div class="point-dignity" data-dignity-system="${result.system}" data-dignity-kinds="${result.kinds.join(' ')}">${result.kinds.length ? result.kinds.map(k=>`<p><span class="dignity-badge">${DIGNITY_WORDS[k][0]}${modern?'〈現代〉':''}</span></p><p>${DIGNITY_WORDS[k][1]}</p>`).join('') : `<p class="dignity-neutral">品位：${modern?'本来の座・デトリメント':'主要4区分'}に該当なし</p>`}</div>`;
+}
 function renderPlanetReadings(ch) {
   const points=ch.pl.concat([ch.alc]);
   let out='';
@@ -627,7 +670,7 @@ function renderPlanetReadings(ch) {
       const si=Math.floor(mod(p.lon)/30), s=SIGNS[si], role=PLANET_ROLES[p.k];
       const text=p.star ? '恒星のアルキオーネ。ここでは位置の参考として表示します。天体と同じ定型文による読み解きは付けていません。' :
         `${PLANET_FIELDS[h]}の場面で、${PLANET_STYLES[si]}、${role[1]}。`;
-      entries.push(`<article class="point-reading" data-reading-point="${p.k}" data-reading-house="${h}" data-reading-longitude="${p.lon}"><h4><span class="point-name">${psym(p)} ${esc(p.ja)}</span><span class="el-${s.el}">${sym(s.g)} ${s.ja}座</span><span class="point-degree num">${fmtDeg(p.lon,!p.star)}${p.r?' <span class="r">R</span>':''}${p.star?' <small>概算</small>':''}</span></h4>${role?`<p class="point-role">${role[0]}</p>`:''}<p>${esc(text)}</p></article>`);
+      entries.push(`<article class="point-reading" data-reading-point="${p.k}" data-reading-house="${h}" data-reading-longitude="${p.lon}"><h4><span class="point-name">${psym(p)} ${esc(p.ja)}</span><span class="el-${s.el}">${sym(s.g)} ${s.ja}座</span><span class="point-degree num">${fmtDeg(p.lon,!p.star)}${p.r?' <span class="r">R</span>':''}${p.star?' <small>概算</small>':''}</span></h4>${role?`<p class="point-role">${role[0]}</p>`:''}<p>${esc(text)}</p>${dignityHTML(p)}</article>`);
     });
     out+=`<section class="planet-house" id="planet-house-${h}"><h3>${h}室 <span>${esc(HOUSES[h].th)}</span></h3>${entries.join('')||'<p class="empty-house">表示対象の天体はありません。</p>'}</section>`;
   }
