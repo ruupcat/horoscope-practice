@@ -152,6 +152,17 @@ html { scroll-padding-top:78px; overflow-anchor:none; }
 .guide dl { margin:12px 0; }
 .guide dt { font-size:13px; font-weight:700; color:var(--accent); margin-top:14px; }
 .guide dd { font-size:14px; margin:3px 0 0; }
+.axis-guide { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:16px; scroll-margin-top:78px; }
+.axis-guide h2 { margin:0 0 10px; font-size:17px; color:var(--accent); }
+.axis-guide p { font-size:13px; line-height:1.8; color:var(--muted); margin:8px 0 14px; }
+.axis-table { width:100%; border-collapse:collapse; font-size:14px; line-height:1.75; }
+.axis-table th,.axis-table td { text-align:left; padding:12px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+.axis-table thead th { font-size:11px; color:var(--muted); background:var(--accent-soft); }
+.axis-table tbody th { width:100px; white-space:nowrap; color:var(--accent); font-size:13px; }
+.axis-table td span { display:block; }
+.axis-table .axis-arrow { color:var(--faint); line-height:1.2; padding:3px 0; }
+.axis-table tr:last-child th,.axis-table tr:last-child td { border-bottom:0; }
+.axis-guide p.axis-hint { margin:16px 0 0; }
 .hrow { scroll-margin-top:78px; }
 @media(max-width:640px) {
  .wrap { padding:16px 12px 42px; gap:14px; }
@@ -170,6 +181,9 @@ html { scroll-padding-top:78px; overflow-anchor:none; }
  .seg .lb { left:2px; font-size:10px; }
  .mk { right:calc(2px + var(--n,0)*20px); }
  .rtab { max-width:none; }
+ .axis-guide { padding:14px 12px; }
+ .axis-table th,.axis-table td { padding:12px 7px; }
+ .axis-table tbody th { width:88px; font-size:12px; }
 }
 @media(max-width:360px) {
  .wrap { padding-inline:8px; }
@@ -214,6 +228,19 @@ html { scroll-padding-top:78px; overflow-anchor:none; }
   <section class="rulers" aria-label="サインの支配星">
     <h2>サインの支配星</h2>
     <table class="rtab" id="rulers"></table>
+  </section>
+  <section class="axis-guide" id="house-axes" aria-labelledby="house-axes-title">
+    <h2 id="house-axes-title">向かい合うハウスの読み方</h2>
+    <p>インターセプトに関係なく、向かい合うハウスを一つの「軸」として読むときの手引きです。</p>
+    <table class="axis-table"><thead><tr><th scope="col">対になるハウス</th><th scope="col">対比させるテーマの例</th></tr></thead><tbody>
+      <tr><th scope="row">1室 ↔ 7室</th><td><span>自分のあり方</span><span class="axis-arrow" aria-hidden="true">↔</span><span>相手との関わり方</span></td></tr>
+<tr><th scope="row">2室 ↔ 8室</th><td><span>自分の持ち物・力</span><span class="axis-arrow" aria-hidden="true">↔</span><span>他者と共有するもの</span></td></tr>
+<tr><th scope="row">3室 ↔ 9室</th><td><span>身近な学び・情報</span><span class="axis-arrow" aria-hidden="true">↔</span><span>広い視野・意味や思想</span></td></tr>
+<tr><th scope="row">4室 ↔ 10室</th><td><span>私的な居場所・土台</span><span class="axis-arrow" aria-hidden="true">↔</span><span>社会での役割・立場</span></td></tr>
+<tr><th scope="row">5室 ↔ 11室</th><td><span>個人の創造・喜び</span><span class="axis-arrow" aria-hidden="true">↔</span><span>仲間と目指す未来</span></td></tr>
+<tr><th scope="row">6室 ↔ 12室</th><td><span>日々を整え、働くこと</span><span class="axis-arrow" aria-hidden="true">↔</span><span>日常の役割を離れ、休み、手放すこと</span></td></tr>
+    </tbody></table>
+    <p class="axis-hint">まず各ハウスを読み、そのあと反対側とどうつながるかを見る。「対立している」「バランスが悪い」と決めず、互いを補う面も探してみてください。</p>
   </section>
 </div>
 
