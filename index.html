@@ -139,11 +139,9 @@ html { scroll-padding-top:78px; overflow-anchor:none; }
 .tabs button { min-height:44px; padding:8px 17px; }
 .quicknav { display:flex; align-items:center; flex-wrap:wrap; gap:8px 16px; font-size:13px; }
 .quicknav a { color:var(--accent); text-underline-offset:4px; padding:5px 0; }
-.quicknav label { margin-left:auto; color:var(--muted); }
-.quicknav select { font:inherit; font-size:16px; min-height:36px; border:1px solid var(--line); border-radius:7px; background:var(--panel); color:var(--fg); padding:3px 7px; }
 .wheel-wrap { min-width:0; }
 .precision-note { font-size:12px; color:var(--muted); margin:8px 4px 0; line-height:1.65; }
-.house-topic { font-size:12px; color:var(--accent); margin-bottom:3px; line-height:1.6; }
+.house-topic { font-size:12px; font-weight:700; color:var(--accent); background:var(--accent-soft); border-left:3px solid var(--ruler-line); border-radius:5px; padding:7px 9px; margin-bottom:3px; line-height:1.7; }
 .combo { text-wrap:pretty; }
 .guide { padding:16px; border:1px solid var(--line); border-radius:14px; background:var(--panel); }
 .guide summary { color:var(--accent); cursor:pointer; font-weight:700; min-height:28px; }
@@ -200,7 +198,7 @@ html { scroll-padding-top:78px; overflow-anchor:none; }
   </header>
   <nav class="tabs" id="tabs" role="tablist" aria-label="チャートを選ぶ"></nav>
   <p class="note" id="note" hidden></p>
-  <nav class="quicknav" aria-label="見たい場所へ"><a href="#wheel">円盤</a><a href="#house-1">ハウスを読む</a><a href="#guide">言葉の手引き</a><label>室へ <select id="house-jump" aria-label="ハウスへ移動"><option value="1">1室</option><option value="2">2室</option><option value="3">3室</option><option value="4">4室</option><option value="5">5室</option><option value="6">6室</option><option value="7">7室</option><option value="8">8室</option><option value="9">9室</option><option value="10">10室</option><option value="11">11室</option><option value="12">12室</option></select></label></nav>
+  <nav class="quicknav" aria-label="見たい場所へ"><a href="#house-1">ハウス</a><a href="#guide">凡例</a></nav>
   <section class="overview">
     <div class="wheel-wrap"><div class="wheel" id="wheel"></div><p class="precision-note">目盛りが実位置。重なる記号は線で結んで離しています。円盤は度・分、天体表は元データの秒まで表示。</p></div>
     <div class="databox">
@@ -624,7 +622,6 @@ function switchPerson(index) {
   render();
   if(keep) { const next=document.getElementById(id); window.scrollBy(0,next.getBoundingClientRect().top-oldTop); }
 }
-$('#house-jump').addEventListener('change',e=>document.getElementById('house-'+e.target.value).scrollIntoView({block:'start'}));
 $('#tabs').addEventListener('keydown',e=>{
   const index=[...$('#tabs').children].indexOf(e.target);
   if(index<0) return;
