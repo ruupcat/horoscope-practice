@@ -1,4 +1,18 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
+.planet-readings>h2 { color:var(--accent); font-size:20px; margin:8px 0; }
+.reading-intro,.empty-house { color:var(--muted); font-size:12px; line-height:1.8; }
+.planet-house { background:var(--panel); border:1px solid var(--line); border-radius:14px; overflow:hidden; margin:16px 0; }
+.planet-house>h3 { background:var(--accent-soft); color:var(--accent); margin:0; padding:12px 14px; font-size:17px; }
+.planet-house>h3 span { display:block; font-size:12px; margin-top:3px; }
+.point-reading { padding:16px; border-top:1px solid var(--line); }
+.point-reading h4 { display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 12px; font-size:14px; margin:0 0 9px; }
+.point-name { font-size:16px; font-weight:700; }
+.point-name .sym { font-size:21px; }
+.point-degree { white-space:nowrap; color:var(--muted); font-size:13px; font-weight:400; }
+.point-reading p { font-size:14px; line-height:1.9; margin:6px 0 0; overflow-wrap:anywhere; }
+.point-reading .point-role { color:var(--accent); font-size:12px; }
+.empty-house { padding:0 16px 12px; }
+</style></head><body>
 <title>ホロスコープ練習帳</title>
 
 
@@ -215,6 +229,12 @@ html { scroll-padding-top:78px; overflow-anchor:none; }
     <div id="rows"></div>
   </section>
 
+  <section class="planet-readings" aria-labelledby="planet-readings-title">
+    <h2 id="planet-readings-title">天体の読み解き</h2>
+    <p class="reading-intro">天体・サイン・ハウスを組み合わせた読みの例。度数は位置を示しています。</p>
+    <p id="planet-readings-note" class="reading-intro" hidden></p>
+    <div id="planet-reading-rows"></div>
+  </section>
   <details id="guide" class="guide">
     <summary>ハウスとサインの言葉を確かめる</summary>
     <p>ハウスは「どんな場面・領域か」、サインは「どんな感じで関わるか」。読みの文章は練習のたたき台です。自分の実感と照らし合わせて、言葉を育ててください。</p>
@@ -564,6 +584,58 @@ let cur = 0; const showAlc = true;
 try { cur = Math.max(0, Math.min(Math.floor(+localStorage.getItem("practice.v2.tab")) || 0, RAW.length - 1)); } catch (e) {}
 const CH = RAW.map((r) => ({ ...r, ...parse(r.txt) }));
 
+// Interpretation prompts authored for this practice book. Positions come from CH.
+const PLANET_ROLES = {
+  Sun:['自分の意思と、生き方の軸','自分が目指したい方向を形にしていく'],
+  Moon:['安心する感覚と、自然な心の反応','自分の気持ちや、落ち着ける条件に気づく'],
+  Mercury:['考えること、学ぶこと、伝えること','情報を受け取り、自分なりに理解して伝える'],
+  Venus:['好きという感覚、美意識、人との親しみ','心ひかれるものを選び、楽しさや親しさを育てる'],
+  Mars:['行動する力、欲求、自己主張','欲しいものに向かって動き、自分の意思を示す'],
+  Jupiter:['可能性を広げる力、信頼、学び','経験の意味を見つけ、選択肢や可能性を広げる'],
+  Saturn:['責任、限界、時間をかけて築く力','難しさと向き合い、続けられる土台を築く'],
+  Uranus:['自由、独自性、当たり前を変える力','慣れた枠を見直し、自分に合う新しい方法を試す'],
+  Neptune:['想像、共感、境界を越えて感じる力','目に見えない思いやイメージを受け取る。理想と実際の違いにも目を向ける'],
+  Pluto:['深い変化、執着、根本から立て直す力','強く手放せないものや力の使い方に向き合い、自分のあり方を根本から見直す'],
+  Chiron:['傷つきやすさと、そこから学ぶこと','苦手さや痛みを急いで消そうとせず、理解や支え方を探す'],
+  Node:['これから育てていく方向','慣れていない経験にも触れ、自分の選択肢を育てる'],
+  Tail:['慣れた反応と、既に使いやすい力','自然に使える力を生かしながら、同じ反応だけに頼っていないかを確かめる']
+};
+const PLANET_STYLES = [
+  '自分から動き、率直に試すやり方で', '五感で確かめ、時間をかけて育てるやり方で',
+  '言葉や情報を行き来させ、いろいろ試すやり方で', '気持ちや親しみを手掛かりに、守り育てるやり方で',
+  '自分の喜びや誇りを込め、表現するやり方で', '細部を観察し、具体的に調整するやり方で',
+  '相手との違いや釣り合いを見ながら、関係を整えるやり方で', '表面で終わらず、核心まで深く関わるやり方で',
+  '未知の経験へ踏み出し、大きな意味を探すやり方で', '現実の条件を踏まえ、着実に積み上げるやり方で',
+  '当たり前から距離を取り、自由な発想を試すやり方で', '気持ちやイメージに共鳴し、柔軟に受け取るやり方で'
+];
+const PLANET_FIELDS = [null,'自分の振る舞い、身体感覚、世界への踏み出し方','持ち物、お金、自分の技能や価値',
+  '身近な学び、会話、日常の情報交換','家庭、居場所、心の土台','遊び、創作、恋愛、自分から表現すること',
+  '日々の仕事、習慣、体の手入れ','一対一の関係、協力、相手との向き合い方','深い信頼、共有するもの、受け継ぐもの',
+  '専門的な学び、旅、思想、広い世界の捉え方','社会での役割、仕事、目指す立場','仲間との活動、共通の理想、未来への計画',
+  '一人の時間、休息、表に出しにくい気持ち'];
+const ANGLE_ROLES = {1:'世界への入り口、最初に表れる振る舞い',4:'心のよりどころ、内側の土台',7:'一対一の関係で向き合う相手やテーマ',10:'社会へ向かう方向、担いたい役割'};
+function renderPlanetReadings(ch) {
+  const points=ch.pl.concat([ch.alc]);
+  let out='';
+  for(let h=1;h<=12;h++) {
+    const entries=[];
+    if(AXES[h]) {
+      const lon=ch.c[h], si=Math.floor(mod(lon)/30), s=SIGNS[si];
+      entries.push(`<article class="point-reading angle-reading" data-angle="${AXES[h]}"><h4><span class="point-name">${AXES[h]}</span><span class="el-${s.el}">${sym(s.g)} ${s.ja}座</span><span class="point-degree num">${fmtDeg(lon)}</span></h4><p class="point-role">${ANGLE_ROLES[h]}</p><p>${esc(WORDS[h][si])}</p></article>`);
+    }
+    points.filter(p=>houseOf(ch.c,p.lon)===h).sort((a,b)=>mod(a.lon-ch.c[h])-mod(b.lon-ch.c[h])).forEach(p=>{
+      const si=Math.floor(mod(p.lon)/30), s=SIGNS[si], role=PLANET_ROLES[p.k];
+      const text=p.star ? '恒星のアルキオーネ。ここでは位置の参考として表示します。天体と同じ定型文による読み解きは付けていません。' :
+        `${PLANET_FIELDS[h]}の場面で、${PLANET_STYLES[si]}、${role[1]}。`;
+      entries.push(`<article class="point-reading" data-reading-point="${p.k}" data-reading-house="${h}" data-reading-longitude="${p.lon}"><h4><span class="point-name">${psym(p)} ${esc(p.ja)}</span><span class="el-${s.el}">${sym(s.g)} ${s.ja}座</span><span class="point-degree num">${fmtDeg(p.lon,!p.star)}${p.r?' <span class="r">R</span>':''}${p.star?' <small>概算</small>':''}</span></h4>${role?`<p class="point-role">${role[0]}</p>`:''}<p>${esc(text)}</p></article>`);
+    });
+    out+=`<section class="planet-house" id="planet-house-${h}"><h3>${h}室 <span>${esc(HOUSES[h].th)}</span></h3>${entries.join('')||'<p class="empty-house">表示対象の天体はありません。</p>'}</section>`;
+  }
+  $('#planet-readings-note').hidden=!ch.note;
+  $('#planet-readings-note').textContent=ch.note||'';
+  $('#planet-reading-rows').innerHTML=out;
+}
+
 function render() {
   const ch = CH[cur];
   document.querySelectorAll("#tabs button").forEach((b, i) => { b.setAttribute("aria-selected", i === cur ? "true" : "false"); b.setAttribute("tabindex",i===cur ? "0" : "-1"); });
@@ -607,6 +679,7 @@ function render() {
     </div>`;
   }
   $("#rows").innerHTML = rows;
+  renderPlanetReadings(ch);
 }
 function $(s) { return document.querySelector(s); }
 
