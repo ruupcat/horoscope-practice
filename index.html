@@ -680,13 +680,13 @@ function renderPlanetReadings(ch) {
     const entries=[];
     if(AXES[h]) {
       const lon=ch.c[h], si=Math.floor(mod(lon)/30), s=SIGNS[si];
-      entries.push(`<article class="point-reading angle-reading" data-angle="${AXES[h]}"><h4><span class="point-name">${AXES[h]}</span><span class="el-${s.el}">${sym(s.g)} ${s.ja}座</span><span class="point-degree num">${fmtDeg(lon)}</span></h4><p class="point-role">${ANGLE_ROLES[h]}</p><p>${esc(WORDS[h][si])}</p></article>`);
+      entries.push(`<article class="point-reading angle-reading" data-angle="${AXES[h]}"><h4><span class="el-${s.el}">${sym(s.g)} ${s.ja}座</span><span class="point-name">${AXES[h]}</span><span class="point-degree num">${fmtDeg(lon)}</span></h4><p class="point-role">${ANGLE_ROLES[h]}</p><p>${esc(WORDS[h][si])}</p></article>`);
     }
     points.filter(p=>houseOf(ch.c,p.lon)===h).sort((a,b)=>mod(a.lon-ch.c[h])-mod(b.lon-ch.c[h])).forEach(p=>{
       const si=Math.floor(mod(p.lon)/30), s=SIGNS[si], role=PLANET_ROLES[p.k];
       const text=p.star ? '恒星のアルキオーネ。ここでは位置の参考として表示します。天体と同じ定型文による読み解きは付けていません。' :
         `${PLANET_STYLES[si]}、${role[1]}。`;
-      entries.push(`<article class="point-reading" data-reading-point="${p.k}" data-reading-house="${h}" data-reading-longitude="${p.lon}"><h4><span class="point-name">${rulerSymbol(p,ch)} ${esc(p.ja)}</span>${p.k===rulerOf(ch)?'<span class="chart-ruler-badge">チャートルーラー'+(ch.note?'（仮）':'')+'</span>':''}<span class="el-${s.el}">${sym(s.g)} ${s.ja}座</span><span class="point-degree num">${fmtDeg(p.lon,!p.star)}${p.r?' <span class="r">R</span>':''}${p.star?' <small>概算</small>':''}</span></h4>${role?`<p class="point-role">${role[0]}</p>`:''}<p>${esc(text)}</p>${chartRulerHTML(p,ch,h)}${dignityHTML(p)}</article>`);
+      entries.push(`<article class="point-reading" data-reading-point="${p.k}" data-reading-house="${h}" data-reading-longitude="${p.lon}"><h4><span class="el-${s.el}">${sym(s.g)} ${s.ja}座</span><span class="point-name">${rulerSymbol(p,ch)} ${esc(p.ja)}</span>${p.k===rulerOf(ch)?'<span class="chart-ruler-badge">チャートルーラー'+(ch.note?'（仮）':'')+'</span>':''}<span class="point-degree num">${fmtDeg(p.lon,!p.star)}${p.r?' <span class="r">R</span>':''}${p.star?' <small>概算</small>':''}</span></h4>${role?`<p class="point-role">${role[0]}</p>`:''}<p>${esc(text)}</p>${chartRulerHTML(p,ch,h)}${dignityHTML(p)}</article>`);
     });
     out+=`<section class="planet-house" id="planet-house-${h}"><h3>${h}室 <span>${esc(HOUSES[h].th)}</span></h3>${entries.join('')||'<p class="empty-house">表示対象の天体はありません。</p>'}</section>`;
   }
