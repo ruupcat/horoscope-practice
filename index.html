@@ -218,26 +218,54 @@ html { scroll-padding-top:78px; overflow-anchor:none; }
  .hd { padding-inline:8px; }
  table.pl { font-size:11px; } table.pl td:first-child { width:16px; }
 }
+
+html { scroll-behavior:smooth; }
+body { padding-bottom:calc(88px + env(safe-area-inset-bottom,0px)); }
+.draconic { margin:24px 0; padding-top:12px; border-top:1px solid var(--line); }
+.draconic>h2 { font-size:20px; color:var(--accent); }
+.chart-details { margin:0 0 12px; border:1px solid var(--line); border-radius:12px; overflow:hidden; min-width:0; }
+.chart-details>summary { list-style:none; cursor:pointer; display:flex; align-items:center; gap:10px; min-height:48px; padding:8px 12px; box-sizing:border-box; font-weight:700; color:var(--accent); background:var(--accent-soft); }
+.chart-details>summary::-webkit-details-marker { display:none; }
+.chart-details>summary::before { content:'＋'; font-size:22px; line-height:1; }
+.chart-details[open]>summary::before { content:'−'; }
+.chart-details>summary:focus-visible,.back-to-top:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+.chart-details>.cusps { padding:10px; }
+.chart-details>.pl { width:100%; }
+.back-to-top { position:fixed; z-index:100; right:max(12px,env(safe-area-inset-right,0px)); bottom:calc(16px + env(safe-area-inset-bottom,0px)); display:flex; align-items:center; justify-content:center; min-width:62px; min-height:48px; padding:0 12px; border-radius:24px; color:var(--accent); background:var(--panel,#fff); border:2px solid var(--accent); box-shadow:0 3px 14px #0002; font-weight:700; text-decoration:none; }
+@media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
 </style>
 
-<div class="wrap">
+<div class="wrap" id="page-top">
   <header class="top">
     <h1>ホロスコープ練習帳</h1>
     <span class="meta" id="meta"></span>
   </header>
   <nav class="tabs" id="tabs" role="tablist" aria-label="チャートを選ぶ"></nav>
   <p class="note" id="note" hidden></p>
-  <nav class="quicknav" aria-label="見たい場所へ"><a href="#house-1">ハウス</a><a href="#planet-readings-title">天体</a><a href="#guide">凡例</a></nav>
+  <nav class="quicknav" aria-label="見たい場所へ"><a href="#draco-title">ドラコニック</a><a href="#house-1">ハウス</a><a href="#planet-readings-title">天体</a><a href="#guide">凡例</a></nav>
   <section class="overview">
     <div class="wheel-wrap"><div class="wheel" id="wheel"></div><p class="precision-note">目盛りが実位置。重なる記号は線で結んで離しています。円盤は度・分、天体表は元データの秒まで表示。</p></div>
     <div class="databox">
-      <h2>ハウス・カスプ</h2>
+      <details class="chart-details"><summary>ハウス・カスプ</summary>
       <div class="cusps num" id="cusps"></div>
-      <h2>天体</h2>
-      <table class="pl num" id="planets" aria-label="天体の位置"></table>
+      </details><details class="chart-details"><summary>天体の位置</summary>
+      <table class="pl num" id="planets" aria-label="天体の位置"></table></details>
 
     </div>
   </section>
+  <section class="draconic" aria-labelledby="draco-title">
+    <h2 id="draco-title">ドラコニックチャート</h2>
+    <p id="draco-note" class="precision-note"></p>
+    <p id="draco-birth-note" class="note" hidden></p>
+    <div class="overview">
+      <div class="wheel-wrap"><div class="wheel" id="draco-wheel" aria-label="ドラコニックの円盤"></div></div>
+      <div class="databox">
+        <details class="chart-details"><summary>ドラコニックのハウス・カスプ</summary><div class="cusps num" id="draco-cusps"></div></details>
+        <details class="chart-details"><summary>ドラコニックの天体の位置</summary><table class="pl num" id="draco-planets" aria-label="ドラコニックの天体の位置"></table></details>
+      </div>
+    </div>
+  </section>
+  <a class="back-to-top" href="#page-top" aria-label="ページの最上部へ戻る">↑ TOP</a>
   <div class="legend"><span><i class="el-fire"></i>火</span><span><i class="el-earth"></i>地</span><span><i class="el-air"></i>風</span><span><i class="el-water"></i>水</span><span>帯の点線＝ハウスの境目　帯の太線＝サインの変わり目</span></div>
   <section class="ledger" aria-label="ハウス一覧">
     <div class="lhead"><div>ハウス</div><div>サイン</div><div>ハウス × サイン</div></div>
@@ -696,6 +724,26 @@ function renderPlanetReadings(ch) {
   $('#planet-reading-rows').innerHTML=out;
 }
 
+// 記録されたヘッドを牡羊座0度へ移す。同じ角度で天体・カスプを回す。
+function draconicChart(ch) {
+  const head = ch.pl.find(p => p.k === 'Node').lon;
+  return { ...ch, c:ch.c.map(lon => mod(lon-head)),
+    pl:ch.pl.map(p => ({...p,lon:mod(p.lon-head)})),
+    alc:{...ch.alc,lon:mod(ch.alc.lon-head)}, head };
+}
+function renderDraconic(ch) {
+  const d = draconicChart(ch);
+  $('#draco-wheel').innerHTML = wheelSVG(d, false);
+  const type = ({true:'真ノード',mean:'平均ノード'})[ch.kv.NODE] || '記録されたノード';
+  $('#draco-note').textContent = type+'のヘッドを牡羊座0°に合わせ、天体・ASC・MC・12カスプを同じ角度だけ回転。室と天体間の角度は通常図と同じです。アルキオーネはこの図では省略しています。';
+  $('#draco-birth-note').hidden = !ch.note;
+  $('#draco-birth-note').textContent = ch.note || '';
+  $('#draco-cusps').innerHTML = Array.from({length:12},(_,k)=>k+1)
+    .sort((a,b)=>((a-1)%6)-((b-1)%6)||a-b)
+    .map(i=>`<div><span class="h">${i}</span><span class="ax">${AXES[i]||''}</span><span>${posTxt(d.c[i])}</span></div>`).join('');
+  $('#draco-planets').innerHTML = d.pl.map(p=>`<tr><td>${psym(p)}</td><td>${p.ja}</td><td>${posTxt(p.lon,true)}${p.r?'<span class="r">R</span>':''}</td><td class="hs">${houseOf(d.c,p.lon)}室</td></tr>`).join('');
+}
+
 function render() {
   const ch = CH[cur];
   document.querySelectorAll("#tabs button").forEach((b, i) => { b.setAttribute("aria-selected", i === cur ? "true" : "false"); b.setAttribute("tabindex",i===cur ? "0" : "-1"); });
@@ -740,6 +788,7 @@ function render() {
   }
   $("#rows").innerHTML = rows;
   renderPlanetReadings(ch);
+  renderDraconic(ch);
 }
 function $(s) { return document.querySelector(s); }
 
